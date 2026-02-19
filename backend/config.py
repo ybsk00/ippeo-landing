@@ -9,7 +9,7 @@ SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
 GMAIL_ADDRESS = os.getenv("GMAIL_ADDRESS", "")
 GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "")
-JWT_SECRET = os.getenv("JWT_SECRET", "medihim-ippo-jwt-secret-key-2026")
+JWT_SECRET = os.getenv("JWT_SECRET", "medihim-ippeo-jwt-secret-key-2026")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 # PubMed / NCBI
