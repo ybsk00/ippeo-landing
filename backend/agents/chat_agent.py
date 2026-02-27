@@ -224,23 +224,40 @@ async def run_chat_rag(
     if keywords:
         try:
             rag_results = await search_relevant_faq(
-                keywords, category, match_threshold=0.6, match_count=5
+                keywords, category, match_threshold=0.55, match_count=8
             )
-            logger.info(f"[ChatAgent] RAG results: {len(rag_results)}")
+            logger.info(
+                f"[ChatAgent] RAG results: {len(rag_results)} "
+                f"(keywords={keywords}, category={category})"
+            )
+            for i, faq in enumerate(rag_results):
+                logger.info(
+                    f"  RAG[{i}] sim={faq.get('similarity', 0):.3f} "
+                    f"proc={faq.get('procedure_name', 'N/A')} "
+                    f"q={faq.get('question', '')[:60]}"
+                )
         except Exception as e:
             logger.warning(f"[ChatAgent] RAG search failed: {e}")
 
     # 4. 응답 생성
     response_text = await generate_chat_response(messages, rag_results, language)
 
-    # RAG 참조 정보 정리 (프론트엔드용)
+    # RAG 참조 정보 정리 (프론트엔드용 — youtube_url 포함)
     rag_references = []
     for faq in rag_results:
-        rag_references.append({
+        ref = {
+            "faq_id": faq.get("id", ""),
             "question": faq.get("question", ""),
+            "answer": faq.get("answer", ""),
             "procedure_name": faq.get("procedure_name", ""),
             "similarity": faq.get("similarity", 0),
             "source_type": faq.get("source_type", "youtube"),
-        })
+        }
+        # YouTube URL 포함 (프론트엔드 유튜브 패널용)
+        yt_url = faq.get("youtube_url", "")
+        if yt_url and "youtube.com" in yt_url:
+            ref["youtube_url"] = yt_url
+            ref["youtube_title"] = faq.get("youtube_title", "")
+        rag_references.append(ref)
 
     return response_text, rag_references
