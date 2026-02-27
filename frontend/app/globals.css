@@ -26,7 +26,45 @@ body {
 
 /* Material Symbols */
 .material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Landing Page Styles */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #FF66CC 0%, #FF99DD 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.mesh-gradient {
+  background:
+    radial-gradient(at 0% 0%, hsla(328,91%,74%,0.4) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(305,91%,85%,0.4) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(335,100%,93%,0.4) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(280,100%,96%,0.4) 0px, transparent 50%);
+}
+
+@keyframes floating {
+  0% { transform: translate(0, 0px); }
+  50% { transform: translate(0, 15px); }
+  100% { transform: translate(0, 0px); }
+}
+
+.floating {
+  animation: floating 3s ease-in-out infinite;
+}
+
+.floating-delayed {
+  animation: floating 4s ease-in-out infinite;
+  animation-delay: 1s;
 }
 
 /* Admin active menu */

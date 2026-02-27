@@ -1,18 +1,22 @@
+import logging
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from models.schemas import BirthDateVerify
 from services.supabase_client import get_supabase
+from services.conversion_tracker import track_event
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/public/report", tags=["public_report"])
 
 
 @router.get("/{token}")
-async def get_public_report(token: str):
+async def get_public_report(token: str, background_tasks: BackgroundTasks):
     db = get_supabase()
 
     report = (
         db.table("reports")
-        .select("id, report_data, access_expires_at, status, consultations(customer_name)")
+        .select("id, report_data, access_expires_at, status, consultation_id, consultations(customer_name)")
         .eq("access_token", token)
         .single()
         .execute()
@@ -31,6 +35,17 @@ async def get_public_report(token: str):
     # 발송된 리포트만 열람 가능
     if report.data["status"] not in ("sent", "approved"):
         raise HTTPException(status_code=403, detail="Report is not available yet")
+
+    # Track report_viewed conversion event if hospital info exists in report_data
+    report_data = report.data.get("report_data") or {}
+    hospital_id = report_data.get("hospital_id")
+    if hospital_id:
+        background_tasks.add_task(
+            track_event,
+            event_type="report_viewed",
+            hospital_id=hospital_id,
+            report_id=report.data["id"],
+        )
 
     return {
         "report_data": report.data["report_data"],

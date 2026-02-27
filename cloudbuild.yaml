@@ -3,24 +3,46 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ippo-backend:$COMMIT_SHA'
+      - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/ippeo-landing/backend:$COMMIT_SHA'
+      - '-t'
+      - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/ippeo-landing/backend:latest'
       - './backend'
 
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ippo-backend:$COMMIT_SHA'
+      - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/ippeo-landing/backend:$COMMIT_SHA'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/ippeo-landing/backend:latest'
 
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
       - 'run'
       - 'deploy'
-      - 'ippo-backend'
+      - 'ippeo-landing'
       - '--image'
-      - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ippo-backend:$COMMIT_SHA'
+      - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/ippeo-landing/backend:$COMMIT_SHA'
       - '--region'
       - 'asia-northeast3'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--memory'
+      - '1Gi'
+      - '--timeout'
+      - '300'
+      - '--min-instances'
+      - '0'
+      - '--max-instances'
+      - '3'
 
 images:
-  - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/cloud-run-source-deploy/ippo-backend:$COMMIT_SHA'
+  - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/ippeo-landing/backend:$COMMIT_SHA'
+  - 'asia-northeast3-docker.pkg.dev/$PROJECT_ID/ippeo-landing/backend:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
