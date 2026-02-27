@@ -226,7 +226,7 @@ export default function ChatClient() {
           </div>
           <div>
             <h1 className="text-sm font-bold text-[#2C3E50]">
-              IPPEO AI {t.headerTitle}
+              IPPEO {t.headerTitle}
             </h1>
             <p className="text-[10px] text-gray-400">{t.headerSub}</p>
           </div>

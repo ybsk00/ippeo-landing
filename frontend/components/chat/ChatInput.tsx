@@ -62,12 +62,12 @@ export default function ChatInput({
             placeholder={placeholder}
             disabled={disabled}
             rows={1}
-            className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-[#2C3E50] placeholder-gray-400 focus:outline-none focus:border-[#E8927C] focus:ring-1 focus:ring-[#E8927C]/30 disabled:bg-gray-50 disabled:text-gray-400 transition-colors font-[Noto_Sans_JP]"
+            className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-[#2C3E50] placeholder-gray-400 focus:outline-none focus:border-[#FF66CC] focus:ring-1 focus:ring-[#FF66CC]/30 disabled:bg-gray-50 disabled:text-gray-400 transition-colors font-[Noto_Sans_JP]"
           />
           <button
             onClick={handleSend}
             disabled={disabled || !value.trim()}
-            className="w-10 h-10 rounded-full bg-[#E8927C] text-white flex items-center justify-center flex-shrink-0 hover:bg-[#d97d68] active:scale-95 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all"
+            className="w-10 h-10 rounded-full bg-[#FF66CC] text-white flex items-center justify-center flex-shrink-0 hover:bg-[#E055B3] active:scale-95 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all"
             aria-label={language === "ko" ? "전송" : "送信"}
           >
             <span className="material-symbols-outlined text-xl">
@@ -77,8 +77,8 @@ export default function ChatInput({
         </div>
         <p className="text-[10px] text-gray-400 mt-1.5 text-center">
           {language === "ko"
-            ? "AI 상담은 참고용이며 전문 의료 상담을 대체하지 않습니다"
-            : "AI相談は参考情報であり、専門医療相談の代わりにはなりません"}
+            ? "본 상담은 참고용이며 전문 의료 상담을 대체하지 않습니다"
+            : "本相談は参考情報であり、専門医療相談の代わりにはなりません"}
         </p>
       </div>
     </div>

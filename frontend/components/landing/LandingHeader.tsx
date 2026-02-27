@@ -12,7 +12,6 @@ interface Props {
 export default function LandingHeader({ t, lang }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const langSwitchHref = lang === "ja" ? "/ko" : "/";
-  const chatHref = `/chat${lang === "ko" ? "?lang=ko" : ""}`;
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-white/50">
@@ -46,12 +45,6 @@ export default function LandingHeader({ t, lang }: Props) {
             >
               <span className="material-symbols-outlined text-xl">language</span>
             </Link>
-            <Link
-              href={chatHref}
-              className="flex items-center justify-center rounded-full bg-black text-white hover:bg-gray-800 h-10 px-6 text-sm font-bold shadow-lg shadow-black/10 transition-all hover:scale-105"
-            >
-              <span className="truncate">{t.nav_cta}</span>
-            </Link>
           </div>
         </nav>
 
@@ -78,12 +71,6 @@ export default function LandingHeader({ t, lang }: Props) {
           <a href="#features" className="block text-sm font-bold text-[#6B4A5C] py-2">{t.nav_service}</a>
           <a href="#process" className="block text-sm font-bold text-[#6B4A5C] py-2">{t.nav_clinic}</a>
           <a href="#faq" className="block text-sm font-bold text-[#6B4A5C] py-2">{t.nav_about}</a>
-          <Link
-            href={chatHref}
-            className="block w-full text-center rounded-full bg-black text-white py-3 text-sm font-bold"
-          >
-            {t.nav_cta}
-          </Link>
         </div>
       )}
     </header>

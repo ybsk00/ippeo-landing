@@ -6,11 +6,12 @@ import CategoryCards from "@/components/landing/CategoryCards";
 import ServiceIntro from "@/components/landing/ServiceIntro";
 import FAQSection from "@/components/landing/FAQSection";
 import LandingFooter from "@/components/landing/LandingFooter";
+import FloatingChatButton from "@/components/chat/FloatingChatButton";
 import Link from "next/link";
 
 export const metadata = {
-  title: "IPPEO | 韓国美容医療AIコンサルティング",
-  description: "AIがあなた専用の韓国美容医療プランを作ります。無料相談を始めましょう。",
+  title: "IPPEO | 韓国美容医療コンサルティング",
+  description: "あなた専用の韓国美容医療プランを作ります。無料相談を始めましょう。",
 };
 
 export default function LandingPageJa() {
@@ -57,6 +58,7 @@ export default function LandingPageJa() {
         </section>
       </main>
       <LandingFooter t={t} />
+      <FloatingChatButton lang="ja" />
     </div>
   );
 }

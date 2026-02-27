@@ -436,3 +436,77 @@ export const publicReportAPI = {
       method: "POST",
     }),
 };
+
+// ============================================
+// 챗봇 관리 API
+// ============================================
+export interface ChatSession {
+  id: string;
+  visitor_id: string;
+  language: string;
+  status: string;
+  consultation_id: string | null;
+  report_id: string | null;
+  created_at: string;
+  updated_at: string;
+  message_count: number;
+}
+
+export interface ChatSessionDetail {
+  session: ChatSession;
+  messages: {
+    id: string;
+    session_id: string;
+    role: "user" | "assistant" | "system";
+    content: string;
+    rag_references: unknown | null;
+    created_at: string;
+  }[];
+  consultation: {
+    id: string;
+    customer_name: string;
+    customer_email: string;
+    status: string;
+    classification: string | null;
+    cta_level: string | null;
+  } | null;
+  report: {
+    id: string;
+    status: string;
+    access_token: string | null;
+    report_type: string;
+    created_at: string;
+  } | null;
+}
+
+export interface ChatAdminStats {
+  total_sessions: number;
+  today_sessions: number;
+  report_generated: number;
+  conversion_rate: number;
+  active_sessions: number;
+}
+
+export const chatAdminAPI = {
+  stats: () => fetchAPI<ChatAdminStats>("/chat/admin/stats"),
+  sessions: (page = 1, perPage = 20, status?: string) => {
+    const params = new URLSearchParams({
+      page: String(page),
+      per_page: String(perPage),
+    });
+    if (status) params.set("status", status);
+    return fetchAPI<{ sessions: ChatSession[]; total: number; page: number; per_page: number }>(
+      `/chat/admin/sessions?${params}`
+    );
+  },
+  sessionDetail: (id: string) =>
+    fetchAPI<ChatSessionDetail>(`/chat/admin/sessions/${id}`),
+  sendEmail: (sessionId: string, email: string, customerName?: string) =>
+    fetchAPI<{ status: string; email: string }>(
+      `/chat/admin/sessions/${sessionId}/send-email`,
+      {
+        method: "POST",
+        body: JSON.stringify({ email, customer_name: customerName || "" }),
+      }
+    ),
+};

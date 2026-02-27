@@ -6,6 +6,7 @@ import { logout, getUsername } from "@/lib/auth";
 
 const menuItems = [
   { href: "/admin", icon: "dashboard", label: "대시보드" },
+  { href: "/admin/chatbot", icon: "smart_toy", label: "챗봇 관리" },
   { href: "/admin/consultations", icon: "chat", label: "상담 관리" },
   { href: "/admin/reports", icon: "assignment", label: "리포트 관리" },
   { href: "/admin/emails", icon: "mail", label: "이메일 발송" },

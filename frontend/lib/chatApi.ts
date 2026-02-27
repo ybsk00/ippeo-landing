@@ -91,7 +91,7 @@ async function fetchChatAPI<T>(
 export function startSession(
   language: Language = "ja"
 ): Promise<StartSessionResponse> {
-  return fetchChatAPI<StartSessionResponse>("/chat/sessions", {
+  return fetchChatAPI<StartSessionResponse>("/chat/start", {
     method: "POST",
     body: JSON.stringify({ language }),
   });
@@ -106,13 +106,10 @@ export function sendMessage(
   sessionId: string,
   content: string
 ): Promise<SendMessageResponse> {
-  return fetchChatAPI<SendMessageResponse>(
-    `/chat/sessions/${sessionId}/messages`,
-    {
-      method: "POST",
-      body: JSON.stringify({ content }),
-    }
-  );
+  return fetchChatAPI<SendMessageResponse>("/chat/message", {
+    method: "POST",
+    body: JSON.stringify({ session_id: sessionId, content }),
+  });
 }
 
 /**
@@ -128,13 +125,10 @@ export function endSession(
     customer_line_id?: string;
   }
 ): Promise<EndSessionResponse> {
-  return fetchChatAPI<EndSessionResponse>(
-    `/chat/sessions/${sessionId}/end`,
-    {
-      method: "POST",
-      body: JSON.stringify(opts),
-    }
-  );
+  return fetchChatAPI<EndSessionResponse>("/chat/end", {
+    method: "POST",
+    body: JSON.stringify({ session_id: sessionId, ...opts }),
+  });
 }
 
 /**
@@ -144,7 +138,7 @@ export function getHistory(
   sessionId: string
 ): Promise<ChatHistoryResponse> {
   return fetchChatAPI<ChatHistoryResponse>(
-    `/chat/sessions/${sessionId}`
+    `/chat/history/${sessionId}`
   );
 }
 
@@ -155,7 +149,7 @@ export function checkReportStatus(
   sessionId: string
 ): Promise<ReportStatusResponse> {
   return fetchChatAPI<ReportStatusResponse>(
-    `/chat/sessions/${sessionId}/report-status`
+    `/chat/report-status/${sessionId}`
   );
 }
 
@@ -169,8 +163,8 @@ export function requestReport(
     customer_email: string;
   }
 ): Promise<{ consultation_id: string; status: string }> {
-  return fetchChatAPI(`/chat/sessions/${sessionId}/generate-report`, {
+  return fetchChatAPI("/chat/end", {
     method: "POST",
-    body: JSON.stringify(opts),
+    body: JSON.stringify({ session_id: sessionId, ...opts }),
   });
 }

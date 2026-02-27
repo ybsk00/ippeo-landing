@@ -1,8 +1,10 @@
 import logging
 import uuid
 from datetime import datetime, timezone
+from typing import Optional
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
+from pydantic import BaseModel
 from models.schemas import ChatStartRequest, ChatMessageRequest, ChatEndRequest
 from services.supabase_client import get_supabase
 from agents.chat_agent import get_greeting, run_chat_rag
@@ -351,3 +353,288 @@ async def get_report_status(session_id: str):
         "access_token": None,
         "consultation_status": c_status,
     }
+
+
+# ============================================
+# Admin Endpoints
+# ============================================
+
+class AdminSendEmailRequest(BaseModel):
+    email: str
+    customer_name: Optional[str] = ""
+
+
+# GET /api/chat/admin/stats — 챗봇 통계
+@router.get("/admin/stats")
+async def admin_chat_stats():
+    """챗봇 세션 통계 (관리자용)"""
+    db = get_supabase()
+
+    # 전체 세션 수
+    all_sessions = db.table("chat_sessions").select("id", count="exact").execute()
+    total_sessions = all_sessions.count or 0
+
+    # 오늘 세션 수
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    today_sessions = (
+        db.table("chat_sessions")
+        .select("id", count="exact")
+        .gte("created_at", f"{today_str}T00:00:00Z")
+        .execute()
+    )
+    today_count = today_sessions.count or 0
+
+    # 리포트 생성된 세션 수 (consultation_id가 있는)
+    report_sessions = (
+        db.table("chat_sessions")
+        .select("id", count="exact")
+        .not_.is_("consultation_id", "null")
+        .execute()
+    )
+    report_count = report_sessions.count or 0
+
+    # 변환율
+    conversion_rate = (
+        round((report_count / total_sessions) * 100, 1)
+        if total_sessions > 0
+        else 0
+    )
+
+    # 활성 세션 수
+    active_sessions = (
+        db.table("chat_sessions")
+        .select("id", count="exact")
+        .eq("status", "active")
+        .execute()
+    )
+    active_count = active_sessions.count or 0
+
+    return {
+        "total_sessions": total_sessions,
+        "today_sessions": today_count,
+        "report_generated": report_count,
+        "conversion_rate": conversion_rate,
+        "active_sessions": active_count,
+    }
+
+
+# GET /api/chat/admin/sessions — 세션 목록
+@router.get("/admin/sessions")
+async def admin_list_sessions(
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    status: Optional[str] = None,
+):
+    """채팅 세션 목록 (관리자용)"""
+    db = get_supabase()
+
+    offset = (page - 1) * per_page
+
+    query = db.table("chat_sessions").select(
+        "id, visitor_id, language, status, consultation_id, report_id, created_at, updated_at",
+        count="exact",
+    )
+
+    if status:
+        query = query.eq("status", status)
+
+    result = (
+        query.order("created_at", desc=True)
+        .range(offset, offset + per_page - 1)
+        .execute()
+    )
+
+    # 각 세션에 메시지 수 추가
+    sessions = result.data or []
+    session_ids = [s["id"] for s in sessions]
+
+    if session_ids:
+        msg_counts_result = (
+            db.table("chat_messages")
+            .select("session_id")
+            .in_("session_id", session_ids)
+            .execute()
+        )
+        msg_count_map: dict[str, int] = {}
+        for msg in (msg_counts_result.data or []):
+            sid = msg["session_id"]
+            msg_count_map[sid] = msg_count_map.get(sid, 0) + 1
+
+        for session in sessions:
+            session["message_count"] = msg_count_map.get(session["id"], 0)
+    else:
+        for session in sessions:
+            session["message_count"] = 0
+
+    return {
+        "sessions": sessions,
+        "total": result.count or 0,
+        "page": page,
+        "per_page": per_page,
+    }
+
+
+# GET /api/chat/admin/sessions/{session_id} — 세션 상세
+@router.get("/admin/sessions/{session_id}")
+async def admin_session_detail(session_id: str):
+    """채팅 세션 상세 (메시지 포함, 관리자용)"""
+    db = get_supabase()
+
+    # 세션 정보
+    session_result = (
+        db.table("chat_sessions")
+        .select("*")
+        .eq("id", session_id)
+        .single()
+        .execute()
+    )
+    if not session_result.data:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    session = session_result.data
+
+    # 메시지 목록
+    msg_result = (
+        db.table("chat_messages")
+        .select("*")
+        .eq("session_id", session_id)
+        .order("created_at")
+        .execute()
+    )
+
+    # 연결된 상담/리포트 정보
+    consultation = None
+    report = None
+    if session.get("consultation_id"):
+        c_result = (
+            db.table("consultations")
+            .select("id, customer_name, customer_email, status, classification, cta_level")
+            .eq("id", session["consultation_id"])
+            .single()
+            .execute()
+        )
+        consultation = c_result.data
+
+        r_result = (
+            db.table("reports")
+            .select("id, status, access_token, report_type, created_at")
+            .eq("consultation_id", session["consultation_id"])
+            .eq("report_type", "r4")
+            .limit(1)
+            .execute()
+        )
+        if r_result.data:
+            report = r_result.data[0]
+
+    return {
+        "session": session,
+        "messages": msg_result.data or [],
+        "consultation": consultation,
+        "report": report,
+    }
+
+
+# POST /api/chat/admin/sessions/{session_id}/send-email — 이메일 발송
+@router.post("/admin/sessions/{session_id}/send-email")
+async def admin_send_email(
+    session_id: str,
+    data: AdminSendEmailRequest,
+    background_tasks: BackgroundTasks,
+):
+    """세션 기반 리포트 생성 + 이메일 발송 (관리자용)"""
+    from services.email_service import send_report_email
+
+    db = get_supabase()
+
+    # 세션 확인
+    session_result = (
+        db.table("chat_sessions")
+        .select("id, status, consultation_id, language")
+        .eq("id", session_id)
+        .single()
+        .execute()
+    )
+    if not session_result.data:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    session = session_result.data
+    consultation_id = session.get("consultation_id")
+    language = session.get("language", "ja")
+
+    # 1. 상담 레코드가 없으면 생성
+    if not consultation_id:
+        try:
+            consultation_id = await convert_chat_to_consultation(
+                session_id=session_id,
+                customer_name=data.customer_name or "",
+                customer_email=data.email,
+                language=language,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    # 2. 리포트 확인
+    report_result = (
+        db.table("reports")
+        .select("id, status, access_token")
+        .eq("consultation_id", consultation_id)
+        .eq("report_type", "r4")
+        .limit(1)
+        .execute()
+    )
+
+    if report_result.data and report_result.data[0].get("access_token"):
+        report = report_result.data[0]
+        # 리포트가 이미 있으면 바로 이메일 발송
+        customer_name = data.customer_name or "お客様"
+        await send_report_email(
+            to_email=data.email,
+            customer_name=customer_name,
+            access_token=report["access_token"],
+        )
+
+        # 리포트 상태 업데이트
+        db.table("reports").update({
+            "status": "sent",
+            "email_sent_at": datetime.now(timezone.utc).isoformat(),
+        }).eq("id", report["id"]).execute()
+
+        return {
+            "status": "sent",
+            "report_id": report["id"],
+            "email": data.email,
+        }
+    else:
+        # 리포트 없으면 파이프라인 실행 후 이메일 발송 (백그라운드)
+        async def _pipeline_and_email():
+            try:
+                await run_pipeline(consultation_id)
+                r = (
+                    db.table("reports")
+                    .select("id, access_token")
+                    .eq("consultation_id", consultation_id)
+                    .eq("report_type", "r4")
+                    .limit(1)
+                    .execute()
+                )
+                if r.data and r.data[0].get("access_token"):
+                    rpt = r.data[0]
+                    await send_report_email(
+                        to_email=data.email,
+                        customer_name=data.customer_name or "お客様",
+                        access_token=rpt["access_token"],
+                    )
+                    db.table("reports").update({
+                        "status": "sent",
+                        "email_sent_at": datetime.now(timezone.utc).isoformat(),
+                    }).eq("id", rpt["id"]).execute()
+                    logger.info(f"[Admin] Email sent for session {session_id[:8]}")
+            except Exception as e:
+                logger.error(f"[Admin] Pipeline+email failed: {e}", exc_info=True)
+
+        background_tasks.add_task(_pipeline_and_email)
+        return {
+            "status": "processing",
+            "consultation_id": consultation_id,
+            "email": data.email,
+        }

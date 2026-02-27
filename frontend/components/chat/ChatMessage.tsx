@@ -26,7 +26,7 @@ export default function ChatMessage({ message, language }: ChatMessageProps) {
     return (
       <div className="flex justify-end mb-4">
         <div className="max-w-[80%]">
-          <div className="bg-[#FFE8E0] text-[#2C3E50] rounded-2xl rounded-tr-sm px-4 py-3">
+          <div className="bg-[#FFE0F0] text-[#2C3E50] rounded-2xl rounded-tr-sm px-4 py-3">
             <p className="text-sm leading-relaxed whitespace-pre-wrap">
               {message.content}
             </p>
@@ -44,7 +44,7 @@ export default function ChatMessage({ message, language }: ChatMessageProps) {
     <div className="mb-4">
       <div className="flex items-start gap-3 max-w-[85%]">
         {/* Avatar */}
-        <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 shadow-sm">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF66CC] to-[#FF99DD] flex items-center justify-center flex-shrink-0 shadow-sm">
           <img
             src="/ippeo-logo.png"
             alt="IPPEO"
