@@ -15,6 +15,12 @@ const LABELS = {
 
 export default function FloatingChatButton({ lang }: Props) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure client-side rendering
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Listen for CTA button clicks across the page
   useEffect(() => {
@@ -23,13 +29,18 @@ export default function FloatingChatButton({ lang }: Props) {
     return () => window.removeEventListener("open-floating-chat", handler);
   }, []);
 
+  if (!mounted) return null;
+
   return (
     <>
       {/* Floating Button */}
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-full bg-gradient-to-r from-[#FF66CC] to-[#FF99DD] px-6 py-4 text-white shadow-xl shadow-[#FF66CC]/30 transition-all hover:scale-105 hover:shadow-2xl hover:shadow-[#FF66CC]/40 active:scale-95 animate-pulse-slow"
+          style={{
+            animation: "ippeo-pulse 3s ease-in-out infinite",
+          }}
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-full bg-gradient-to-r from-[#FF66CC] to-[#FF99DD] px-6 py-4 text-white shadow-xl shadow-[#FF66CC]/30 transition-all hover:scale-105 hover:shadow-2xl hover:shadow-[#FF66CC]/40 active:scale-95"
         >
           <span className="material-symbols-outlined text-2xl">chat</span>
           <span className="text-sm font-bold whitespace-nowrap">
@@ -43,15 +54,17 @@ export default function FloatingChatButton({ lang }: Props) {
         <FloatingChatPanel lang={lang} onClose={() => setOpen(false)} />
       )}
 
-      <style jsx>{`
-        @keyframes pulse-slow {
-          0%, 100% { box-shadow: 0 10px 25px -5px rgba(255, 102, 204, 0.3); }
-          50% { box-shadow: 0 10px 40px -5px rgba(255, 102, 204, 0.5); }
-        }
-        .animate-pulse-slow {
-          animation: pulse-slow 3s ease-in-out infinite;
-        }
-      `}</style>
+      {/* Global keyframes — no styled-jsx needed */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+            @keyframes ippeo-pulse {
+              0%, 100% { box-shadow: 0 10px 25px -5px rgba(255, 102, 204, 0.3); }
+              50% { box-shadow: 0 10px 40px -5px rgba(255, 102, 204, 0.5); }
+            }
+          `,
+        }}
+      />
     </>
   );
 }
