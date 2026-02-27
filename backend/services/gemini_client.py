@@ -125,13 +125,14 @@ def safe_parse_json(text: str) -> dict | list:
 
 async def generate_json(prompt: str, system_instruction: str = "", max_retries: int = 3) -> str:
     """JSON 생성 + 파싱 검증. 파싱 실패 시 Gemini 재호출."""
-    model = genai.GenerativeModel(
-        "gemini-2.5-flash",
-        system_instruction=system_instruction,
-        generation_config=genai.GenerationConfig(
+    model_kwargs: dict = {
+        "generation_config": genai.GenerationConfig(
             response_mime_type="application/json",
         ),
-    )
+    }
+    if system_instruction:
+        model_kwargs["system_instruction"] = system_instruction
+    model = genai.GenerativeModel("gemini-2.5-flash", **model_kwargs)
     last_error = None
     for attempt in range(max_retries):
         response = await _retry_generate(model, prompt)
