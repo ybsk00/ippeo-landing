@@ -44,6 +44,8 @@ app.add_middleware(
         "https://ippeo-medhim.firebaseapp.com",
         "https://ippeo-langding.web.app",
         "https://ippeo-langding.firebaseapp.com",
+        "https://arumi-landing.web.app",
+        "https://arumi-landing.firebaseapp.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
