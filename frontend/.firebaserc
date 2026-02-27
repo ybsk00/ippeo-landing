@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "ippeo-medhim"
+    "default": "ippeo-medhim",
+    "landing": "ippeo-langding"
   }
 }
