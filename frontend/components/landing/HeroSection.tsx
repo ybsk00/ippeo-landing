@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { type Dict, type Lang } from "@/lib/i18n";
+import ChatCTAButton from "@/components/chat/ChatCTAButton";
 
 interface Props {
   t: Dict;
@@ -7,7 +7,6 @@ interface Props {
 }
 
 export default function HeroSection({ t, lang }: Props) {
-  const chatHref = `/chat${lang === "ko" ? "?lang=ko" : ""}`;
 
   return (
     <section className="relative overflow-hidden pt-12 pb-20 lg:pt-28 lg:pb-32 mesh-gradient">
@@ -43,15 +42,14 @@ export default function HeroSection({ t, lang }: Props) {
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-4 pt-2">
-              <Link
-                href={chatHref}
-                className="group flex h-14 items-center justify-center rounded-full bg-[#FF66CC] hover:bg-[#E045A5] text-white px-8 text-lg font-bold shadow-lg shadow-[#FF66CC]/30 transition-all hover:scale-105 hover:shadow-[#FF66CC]/40"
+              <ChatCTAButton
+                className="group flex h-14 items-center justify-center rounded-full bg-[#FF66CC] hover:bg-[#E045A5] text-white px-8 text-lg font-bold shadow-lg shadow-[#FF66CC]/30 transition-all hover:scale-105 hover:shadow-[#FF66CC]/40 cursor-pointer"
               >
                 <span>{t.hero_cta}</span>
                 <span className="material-symbols-outlined ml-2 text-xl group-hover:translate-x-1 transition-transform">
                   arrow_forward
                 </span>
-              </Link>
+              </ChatCTAButton>
               <a
                 href="#process"
                 className="flex h-14 items-center justify-center rounded-full bg-white border border-[#FADBE9] text-[#2D1A25] hover:bg-gray-50 px-8 text-lg font-bold transition-all shadow-sm"

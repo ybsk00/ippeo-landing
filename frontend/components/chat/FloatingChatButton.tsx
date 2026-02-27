@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Lang } from "@/lib/i18n";
 import FloatingChatPanel from "./FloatingChatPanel";
 
@@ -15,6 +15,13 @@ const LABELS = {
 
 export default function FloatingChatButton({ lang }: Props) {
   const [open, setOpen] = useState(false);
+
+  // Listen for CTA button clicks across the page
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener("open-floating-chat", handler);
+    return () => window.removeEventListener("open-floating-chat", handler);
+  }, []);
 
   return (
     <>

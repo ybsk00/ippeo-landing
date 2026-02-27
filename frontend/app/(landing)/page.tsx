@@ -7,7 +7,7 @@ import ServiceIntro from "@/components/landing/ServiceIntro";
 import FAQSection from "@/components/landing/FAQSection";
 import LandingFooter from "@/components/landing/LandingFooter";
 import FloatingChatButton from "@/components/chat/FloatingChatButton";
-import Link from "next/link";
+import ChatCTAButton from "@/components/chat/ChatCTAButton";
 
 export const metadata = {
   title: "IPPEO | 韓国美容医療コンサルティング",
@@ -40,12 +40,11 @@ export default function LandingPageJa() {
                 {t.cta_desc}
               </p>
               <div className="flex w-full flex-col items-center justify-center gap-4 sm:flex-row mt-4">
-                <Link
-                  href="/chat"
-                  className="w-full sm:w-auto h-14 rounded-full bg-white text-[#FF66CC] px-10 text-lg font-bold shadow-lg transition-transform hover:scale-105 hover:bg-gray-50 flex items-center justify-center"
+                <ChatCTAButton
+                  className="w-full sm:w-auto h-14 rounded-full bg-white text-[#FF66CC] px-10 text-lg font-bold shadow-lg transition-transform hover:scale-105 hover:bg-gray-50 flex items-center justify-center cursor-pointer"
                 >
                   {t.cta_button1}
-                </Link>
+                </ChatCTAButton>
                 <a
                   href="#"
                   className="w-full sm:w-auto h-14 rounded-full bg-transparent border-2 border-white/40 hover:bg-white/10 text-white px-10 text-lg font-bold transition-colors flex items-center justify-center"
