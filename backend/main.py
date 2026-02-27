@@ -27,7 +27,7 @@ from api.chat import router as chat_router
 from api.hospital import router as hospital_router
 
 app = FastAPI(
-    title="MediHim Ippeo API",
+    title="ARUMI API",
     description="AI 상담 리포트 시스템 백엔드",
     version="1.0.0",
 )
@@ -65,7 +65,7 @@ app.include_router(hospital_router)
 
 @app.get("/")
 async def root():
-    return {"service": "MediHim Ippeo API", "status": "running"}
+    return {"service": "ARUMI API", "status": "running"}
 
 
 @app.get("/health")

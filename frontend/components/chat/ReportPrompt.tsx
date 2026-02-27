@@ -39,7 +39,7 @@ export default function ReportPrompt({
             href={reportUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-[#E8927C] text-white text-sm font-bold px-5 py-2.5 rounded-full hover:bg-[#d97d68] transition-colors w-full justify-center"
+            className="inline-flex items-center gap-2 bg-[#C97FAF] text-white text-sm font-bold px-5 py-2.5 rounded-full hover:bg-[#B06A99] transition-colors w-full justify-center"
           >
             <span className="material-symbols-outlined text-lg">
               description
@@ -78,7 +78,7 @@ export default function ReportPrompt({
       <div className="mx-4 mb-4">
         <button
           onClick={() => setIsOpen(true)}
-          className="w-full bg-gradient-to-r from-[#E8927C] to-[#F0A896] text-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
+          className="w-full bg-gradient-to-r from-[#C97FAF] to-[#DFA3C7] text-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all active:scale-[0.99]"
         >
           <div className="flex items-center justify-center gap-2">
             <span className="material-symbols-outlined text-xl">
@@ -101,13 +101,13 @@ export default function ReportPrompt({
 
   return (
     <div className="mx-4 mb-4">
-      <div className="bg-white border border-[#E8927C]/30 rounded-xl p-4 shadow-sm">
+      <div className="bg-white border border-[#C97FAF]/30 rounded-xl p-4 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[#E8927C] text-xl">
+            <span className="material-symbols-outlined text-[#C97FAF] text-xl">
               auto_awesome
             </span>
-            <p className="text-sm font-bold text-[#2C3E50]">
+            <p className="text-sm font-bold text-[#3A2630]">
               {t.createReport}
             </p>
           </div>
@@ -131,7 +131,7 @@ export default function ReportPrompt({
               onChange={(e) => setName(e.target.value)}
               placeholder={t.namePlaceholder}
               required
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#2C3E50] placeholder-gray-400 focus:outline-none focus:border-[#E8927C] focus:ring-1 focus:ring-[#E8927C]/30 font-[Noto_Sans_JP]"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#3A2630] placeholder-gray-400 focus:outline-none focus:border-[#C97FAF] focus:ring-1 focus:ring-[#C97FAF]/30 font-[Noto_Sans_JP]"
             />
           </div>
           <div>
@@ -144,13 +144,13 @@ export default function ReportPrompt({
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t.emailPlaceholder}
               required
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#2C3E50] placeholder-gray-400 focus:outline-none focus:border-[#E8927C] focus:ring-1 focus:ring-[#E8927C]/30"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-[#3A2630] placeholder-gray-400 focus:outline-none focus:border-[#C97FAF] focus:ring-1 focus:ring-[#C97FAF]/30"
             />
           </div>
           <button
             type="submit"
             disabled={!name.trim() || !email.trim()}
-            className="w-full bg-[#E8927C] text-white text-sm font-bold py-2.5 rounded-full hover:bg-[#d97d68] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="w-full bg-[#C97FAF] text-white text-sm font-bold py-2.5 rounded-full hover:bg-[#B06A99] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             {t.submit}
           </button>

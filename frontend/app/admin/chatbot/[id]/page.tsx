@@ -299,8 +299,8 @@ export default function ChatbotSessionDetail() {
                       <div
                         className={`max-w-[75%] ${
                           isUser
-                            ? "bg-[#FFE0F0] text-[#2C3E50] rounded-2xl rounded-tr-sm"
-                            : "bg-white text-[#2C3E50] rounded-2xl rounded-tl-sm border border-slate-100 shadow-sm"
+                            ? "bg-[#F3E6DF] text-[#3A2630] rounded-2xl rounded-tr-sm"
+                            : "bg-white text-[#3A2630] rounded-2xl rounded-tl-sm border border-slate-100 shadow-sm"
                         } px-4 py-3`}
                       >
                         <div className="flex items-center gap-2 mb-1">

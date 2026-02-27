@@ -3,18 +3,18 @@ export const dictionaries = {
     // Header
     nav_service: "サービス",
     nav_clinic: "提携クリニック",
-    nav_about: "IPPEOについて",
+    nav_about: "ARUMIについて",
     nav_login: "ログイン",
     nav_cta: "無料相談を予約",
     lang_switch: "한국어",
 
     // Hero
-    hero_badge: "韓国美容医療 × IPPEO",
+    hero_badge: "韓国美容医療 × ARUMI",
     hero_title_1: "プロが提案する、",
     hero_title_accent: "あなただけ",
     hero_title_2: "の極上美容プラン",
     hero_desc:
-      "IPPEOは、最新技術を活用して最適な施術とクリニックをマッチング。安心・安全な韓国美容医療の旅をフルサポートします。",
+      "ARUMIは、最新技術を活用して最適な施術とクリニックをマッチング。安心・安全な韓国美容医療の旅をフルサポートします。",
     hero_cta: "無料相談を始める",
     hero_cta2: "使い方を見る",
     hero_trust1: "政府公認医療機関のみ",
@@ -34,8 +34,8 @@ export const dictionaries = {
     stats_satisfaction_label: "顧客満足度",
 
     // Features (Why IPPEO)
-    features_label: "Why IPPEO?",
-    features_title: "IPPEOが選ばれる理由",
+    features_label: "Why ARUMI?",
+    features_title: "ARUMIが選ばれる理由",
     features_desc:
       "最先端の技術と厳選されたクリニックネットワークで、理想の美しさを実現します。",
     feature1_title: "パーソナライズ無料診断",
@@ -88,7 +88,7 @@ export const dictionaries = {
 
     // Footer
     footer_desc:
-      "IPPEO（イッポ）は、テクノロジーの力で美容医療をもっと身近に、もっと安全にするプラットフォームです。",
+      "ARUMI（アルミ）は、テクノロジーの力で美容医療をもっと身近に、もっと安全にするプラットフォームです。",
     footer_service: "サービス",
     footer_service_1: "無料相談",
     footer_service_2: "提携クリニック一覧",
@@ -99,7 +99,7 @@ export const dictionaries = {
     footer_support_2: "お問い合わせ",
     footer_support_3: "プライバシーポリシー",
     footer_support_4: "運営会社",
-    footer_copyright: "© 2026 IPPEO Inc. All rights reserved.",
+    footer_copyright: "© 2026 ARUMI Inc. All rights reserved.",
     footer_disclaimer:
       "※本サービスは医療行為を行うものではありません。施術の最終判断は医療機関にてご確認ください。",
   },
@@ -107,18 +107,18 @@ export const dictionaries = {
     // Header
     nav_service: "서비스",
     nav_clinic: "제휴 클리닉",
-    nav_about: "IPPEO 소개",
+    nav_about: "ARUMI 소개",
     nav_login: "로그인",
     nav_cta: "무료 상담 예약",
     lang_switch: "日本語",
 
     // Hero
-    hero_badge: "한국 미용의료 × IPPEO",
+    hero_badge: "한국 미용의료 × ARUMI",
     hero_title_1: "전문가가 제안하는,",
     hero_title_accent: "나만의",
     hero_title_2: "프리미엄 뷰티 플랜",
     hero_desc:
-      "IPPEO는 최신 기술을 활용하여 최적의 시술과 클리닉을 매칭합니다. 안심하고 안전한 한국 미용의료 여행을 풀서포트합니다.",
+      "ARUMI는 최신 기술을 활용하여 최적의 시술과 클리닉을 매칭합니다. 안심하고 안전한 한국 미용의료 여행을 풀서포트합니다.",
     hero_cta: "무료 상담 시작하기",
     hero_cta2: "이용 방법 보기",
     hero_trust1: "정부 공인 의료기관만",
@@ -138,8 +138,8 @@ export const dictionaries = {
     stats_satisfaction_label: "고객 만족도",
 
     // Features (Why IPPEO)
-    features_label: "Why IPPEO?",
-    features_title: "IPPEO가 선택받는 이유",
+    features_label: "Why ARUMI?",
+    features_title: "ARUMI가 선택받는 이유",
     features_desc:
       "최첨단 기술과 엄선된 클리닉 네트워크로 이상적인 아름다움을 실현합니다.",
     feature1_title: "맞춤 무료 진단",
@@ -192,7 +192,7 @@ export const dictionaries = {
 
     // Footer
     footer_desc:
-      "IPPEO(이뽀)는 테크놀로지의 힘으로 미용의료를 더 가깝게, 더 안전하게 만드는 플랫폼입니다.",
+      "ARUMI(아루미)는 테크놀로지의 힘으로 미용의료를 더 가깝게, 더 안전하게 만드는 플랫폼입니다.",
     footer_service: "서비스",
     footer_service_1: "무료 상담",
     footer_service_2: "제휴 클리닉 목록",
@@ -203,7 +203,7 @@ export const dictionaries = {
     footer_support_2: "문의하기",
     footer_support_3: "개인정보처리방침",
     footer_support_4: "운영 회사",
-    footer_copyright: "© 2026 IPPEO Inc. All rights reserved.",
+    footer_copyright: "© 2026 ARUMI Inc. All rights reserved.",
     footer_disclaimer:
       "※ 본 서비스는 의료행위를 수행하지 않습니다. 시술의 최종 판단은 의료기관에서 확인해주세요.",
   },

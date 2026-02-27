@@ -318,7 +318,7 @@ export default function NewConsultationPage() {
                   type="text"
                   value={formData.customerId}
                   onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-                  placeholder="메디힘 플랫폼 ID"
+                  placeholder="ARUMI 플랫폼 ID"
                   className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 />
               </div>

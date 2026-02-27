@@ -182,7 +182,7 @@ export default function ChatClient() {
     return (
       <div className="max-w-[480px] sm:max-w-[640px] mx-auto min-h-screen flex items-center justify-center font-[Noto_Sans_JP]">
         <div className="text-center">
-          <div className="w-10 h-10 border-4 border-[#E8927C] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <div className="w-10 h-10 border-4 border-[#C97FAF] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-sm text-gray-500">{t.loading}</p>
         </div>
       </div>
@@ -197,13 +197,13 @@ export default function ChatClient() {
           <span className="material-symbols-outlined text-5xl text-gray-300 mb-4 block">
             error_outline
           </span>
-          <p className="text-base font-bold text-[#2C3E50] mb-2">
+          <p className="text-base font-bold text-[#3A2630] mb-2">
             {t.errorTitle}
           </p>
           <p className="text-sm text-gray-500 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-[#E8927C] text-white text-sm font-bold px-6 py-2.5 rounded-full hover:bg-[#d97d68] transition-colors"
+            className="bg-[#C97FAF] text-white text-sm font-bold px-6 py-2.5 rounded-full hover:bg-[#B06A99] transition-colors"
           >
             {t.retry}
           </button>
@@ -213,20 +213,20 @@ export default function ChatClient() {
   }
 
   return (
-    <div className="max-w-[480px] sm:max-w-[640px] mx-auto min-h-screen flex flex-col font-[Noto_Sans_JP] bg-[#FAFAFA]">
+    <div className="max-w-[480px] sm:max-w-[640px] mx-auto min-h-screen flex flex-col font-[Noto_Sans_JP] bg-[#FFFDFB]">
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100 px-4 py-3">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#E8927C] to-[#F0A896] flex items-center justify-center shadow-sm">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#C97FAF] to-[#DFA3C7] flex items-center justify-center shadow-sm">
             <img
-              src="/ippeo-logo.png"
-              alt="IPPEO"
+              src="/arumi-logo.png"
+              alt="ARUMI"
               className="w-6 h-6 rounded-sm"
             />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-[#2C3E50]">
-              IPPEO {t.headerTitle}
+            <h1 className="text-sm font-bold text-[#3A2630]">
+              ARUMI {t.headerTitle}
             </h1>
             <p className="text-[10px] text-gray-400">{t.headerSub}</p>
           </div>

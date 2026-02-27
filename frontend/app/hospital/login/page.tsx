@@ -57,7 +57,7 @@ export default function HospitalLoginPage() {
           </div>
           <h1 className="text-2xl font-bold text-white">Hospital Dashboard</h1>
           <p className="text-slate-400 text-sm mt-1">
-            IPPEO Conversion Analytics
+            ARUMI Conversion Analytics
           </p>
         </div>
 
@@ -118,7 +118,7 @@ export default function HospitalLoginPage() {
         </form>
 
         <p className="text-center text-slate-500 text-xs mt-6">
-          &copy; 2026 Medihim Ippeo. All rights reserved.
+          &copy; 2026 ARUMI. All rights reserved.
         </p>
       </div>
     </div>

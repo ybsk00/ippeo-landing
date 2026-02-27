@@ -10,7 +10,7 @@ function getApiBase(): string {
   return `${SITE_URL}/api`;
 }
 
-const DEFAULT_TITLE = "美容相談リポート | IPPEO";
+const DEFAULT_TITLE = "美容相談リポート | ARUMI";
 const DEFAULT_DESC =
   "韓国美容医療の専門カウンセリングレポートをお届けします。";
 
@@ -27,10 +27,10 @@ export async function generateMetadata({
     openGraph: {
       title: DEFAULT_TITLE,
       description: DEFAULT_DESC,
-      siteName: "IPPEO",
+      siteName: "ARUMI",
       locale: "ja_JP",
       type: "article",
-      images: [{ url: `${SITE_URL}/ippeo-logo.png`, width: 480, height: 480 }],
+      images: [{ url: `${SITE_URL}/arumi-logo.png`, width: 480, height: 480 }],
     },
   };
 
@@ -46,7 +46,7 @@ export async function generateMetadata({
     const customerName = data.customer_name;
 
     const title = reportData?.title || `${customerName}様 美容相談リポート`;
-    const ogTitle = `${title} | IPPEO`;
+    const ogTitle = `${title} | ARUMI`;
 
     // section1_key_summary の要点から説明文を生成
     let description = DEFAULT_DESC;
@@ -67,12 +67,12 @@ export async function generateMetadata({
       openGraph: {
         title: ogTitle,
         description,
-        siteName: "IPPEO",
+        siteName: "ARUMI",
         locale: "ja_JP",
         type: "article",
         url: `${SITE_URL}/report/${token}`,
         images: [
-          { url: `${SITE_URL}/ippeo-logo.png`, width: 480, height: 480 },
+          { url: `${SITE_URL}/arumi-logo.png`, width: 480, height: 480 },
         ],
       },
     };

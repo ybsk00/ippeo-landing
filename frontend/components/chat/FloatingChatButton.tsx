@@ -38,9 +38,9 @@ export default function FloatingChatButton({ lang }: Props) {
         <button
           onClick={() => setOpen(true)}
           style={{
-            animation: "ippeo-pulse 3s ease-in-out infinite",
+            animation: "arumi-pulse 3s ease-in-out infinite",
           }}
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-full bg-gradient-to-r from-[#FF66CC] to-[#FF99DD] px-6 py-4 text-white shadow-xl shadow-[#FF66CC]/30 transition-all hover:scale-105 hover:shadow-2xl hover:shadow-[#FF66CC]/40 active:scale-95"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-full bg-gradient-to-r from-[#C97FAF] to-[#DFA3C7] px-6 py-4 text-white shadow-xl shadow-[#C97FAF]/25 transition-all hover:scale-105 hover:shadow-2xl hover:shadow-[#C97FAF]/35 active:scale-95"
         >
           <span className="material-symbols-outlined text-2xl">chat</span>
           <span className="text-sm font-bold whitespace-nowrap">
@@ -58,9 +58,9 @@ export default function FloatingChatButton({ lang }: Props) {
       <style
         dangerouslySetInnerHTML={{
           __html: `
-            @keyframes ippeo-pulse {
-              0%, 100% { box-shadow: 0 10px 25px -5px rgba(255, 102, 204, 0.3); }
-              50% { box-shadow: 0 10px 40px -5px rgba(255, 102, 204, 0.5); }
+            @keyframes arumi-pulse {
+              0%, 100% { box-shadow: 0 10px 25px -5px rgba(201, 127, 175, 0.25); }
+              50% { box-shadow: 0 10px 40px -5px rgba(201, 127, 175, 0.45); }
             }
           `,
         }}

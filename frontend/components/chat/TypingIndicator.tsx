@@ -12,8 +12,8 @@ export default function TypingIndicator({ language }: TypingIndicatorProps) {
       {/* Avatar */}
       <div className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 shadow-sm">
         <img
-          src="/ippeo-logo.png"
-          alt="IPPEO"
+          src="/arumi-logo.png"
+          alt="ARUMI"
           className="w-5 h-5 rounded-sm"
         />
       </div>

@@ -3,12 +3,12 @@ export default function ReportFooter() {
     <footer className="bg-white border-t border-gray-100 p-8 text-center">
       <div className="flex justify-center items-center gap-2 mb-6">
         <img
-          src="/ippeo-logo.png"
-          alt="IPPEO"
+          src="/arumi-logo.png"
+          alt="ARUMI"
           className="w-6 h-6 rounded"
         />
         <span className="text-sm font-bold text-text-dark">
-          IPPEO | オンライン相談リポート
+          ARUMI | オンライン相談リポート
         </span>
       </div>
       <a
@@ -22,7 +22,7 @@ export default function ReportFooter() {
           本リポートはカウンセリング時の内容を元に作成されたものであり、確定的な診断や治療を保証するものではありません。
         </p>
         <p className="text-[10px] text-gray-400">
-          &copy; 2026 IPPEO Beauty Consultation.
+          &copy; 2026 ARUMI Beauty Consultation.
         </p>
       </div>
     </footer>

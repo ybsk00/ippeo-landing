@@ -10,7 +10,7 @@ import FloatingChatButton from "@/components/chat/FloatingChatButton";
 import ChatCTAButton from "@/components/chat/ChatCTAButton";
 
 export const metadata = {
-  title: "IPPEO | 韓国美容医療コンサルティング",
+  title: "ARUMI | 韓国美容医療コンサルティング",
   description: "あなた専用の韓国美容医療プランを作ります。無料相談を始めましょう。",
 };
 
@@ -18,7 +18,7 @@ export default function LandingPageJa() {
   const t = getDict("ja");
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[#FDF7FA]" style={{ fontFamily: "'Noto Sans JP', 'Inter', sans-serif" }}>
+    <div className="relative flex min-h-screen w-full flex-col overflow-x-hidden bg-[#F3E6DF]" style={{ fontFamily: "'Noto Sans JP', 'Inter', sans-serif" }}>
       <LandingHeader t={t} lang="ja" />
       <main className="flex-1">
         <HeroSection t={t} lang="ja" />
@@ -29,7 +29,7 @@ export default function LandingPageJa() {
 
         {/* Bottom CTA */}
         <section className="py-16 lg:py-24 px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl bg-gradient-to-br from-[#FF66CC] to-[#E045A5] text-white shadow-2xl shadow-[#FF66CC]/40 relative">
+          <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl bg-gradient-to-br from-[#C97FAF] to-[#B06A99] text-white shadow-2xl shadow-[#C97FAF]/30 relative">
             <div className="absolute -right-20 -top-20 h-96 w-96 rounded-full bg-white/20 blur-3xl" />
             <div className="absolute -left-20 -bottom-20 h-96 w-96 rounded-full bg-black/10 blur-3xl" />
             <div className="relative flex flex-col items-center justify-center gap-8 px-6 py-16 text-center md:px-12 lg:py-24">
@@ -41,7 +41,7 @@ export default function LandingPageJa() {
               </p>
               <div className="flex w-full flex-col items-center justify-center gap-4 sm:flex-row mt-4">
                 <ChatCTAButton
-                  className="w-full sm:w-auto h-14 rounded-full bg-white text-[#FF66CC] px-10 text-lg font-bold shadow-lg transition-transform hover:scale-105 hover:bg-gray-50 flex items-center justify-center cursor-pointer"
+                  className="w-full sm:w-auto h-14 rounded-full bg-white text-[#C97FAF] px-10 text-lg font-bold shadow-lg transition-transform hover:scale-105 hover:bg-gray-50 flex items-center justify-center cursor-pointer"
                 >
                   {t.cta_button1}
                 </ChatCTAButton>

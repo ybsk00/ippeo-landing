@@ -8,12 +8,12 @@ export default function ReportHeader({ title, date }: ReportHeaderProps) {
     <header className="glass-header sticky top-0 z-40 border-b border-gray-100 px-5 py-4">
       <div className="flex items-center gap-2 mb-3">
         <img
-          src="/ippeo-logo.png"
-          alt="IPPEO"
+          src="/arumi-logo.png"
+          alt="ARUMI"
           className="w-6 h-6 rounded"
         />
         <h1 className="text-sm font-bold text-text-dark tracking-tight">
-          IPPEO | オンライン相談リポート
+          ARUMI | オンライン相談リポート
         </h1>
       </div>
       <div>

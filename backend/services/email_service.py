@@ -24,14 +24,14 @@ def _build_r4_html(customer_name: str, report_url: str) -> str:
     <head>
         <meta charset="utf-8">
         <style>
-            body {{ font-family: 'Noto Sans JP', sans-serif; background: #FAF7F9; margin: 0; padding: 0; }}
+            body {{ font-family: 'Noto Sans JP', sans-serif; background: #F3E6DF; margin: 0; padding: 0; }}
             .container {{ max-width: 480px; margin: 40px auto; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; }}
-            .header {{ background: linear-gradient(135deg, #FF66CC 0%, #E055B3 100%); padding: 32px 24px; text-align: center; color: white; }}
+            .header {{ background: linear-gradient(135deg, #C97FAF 0%, #B06A99 100%); padding: 32px 24px; text-align: center; color: white; }}
             .header h1 {{ font-size: 18px; margin: 0 0 4px 0; }}
             .header p {{ font-size: 12px; margin: 0; opacity: 0.9; }}
             .body {{ padding: 32px 24px; }}
-            .body p {{ font-size: 14px; color: #2C3E50; line-height: 1.8; margin: 0 0 16px 0; }}
-            .cta {{ display: block; background: #FF66CC; color: white; text-decoration: none; padding: 14px 24px; border-radius: 8px; text-align: center; font-size: 14px; font-weight: bold; margin: 24px 0; }}
+            .body p {{ font-size: 14px; color: #3A2630; line-height: 1.8; margin: 0 0 16px 0; }}
+            .cta {{ display: block; background: #C97FAF; color: white; text-decoration: none; padding: 14px 24px; border-radius: 8px; text-align: center; font-size: 14px; font-weight: bold; margin: 24px 0; }}
             .footer {{ padding: 20px 24px; border-top: 1px solid #f0f0f0; text-align: center; }}
             .footer p {{ font-size: 11px; color: #999; margin: 4px 0; }}
         </style>
@@ -39,7 +39,7 @@ def _build_r4_html(customer_name: str, report_url: str) -> str:
     <body>
         <div class="container">
             <div class="header">
-                <h1>IPPEO | 化粧相談リポート</h1>
+                <h1>ARUMI | オンライン相談リポート</h1>
                 <p>韓国美容医療コンサルティング</p>
             </div>
             <div class="body">
@@ -52,7 +52,7 @@ def _build_r4_html(customer_name: str, report_url: str) -> str:
                 </p>
             </div>
             <div class="footer">
-                <p>IPPEO | 韓国美容医療コンサルティング</p>
+                <p>ARUMI | 韓国美容医療コンサルティング</p>
                 <p>本メールにお心当たりがない場合はお手数ですが削除してください。</p>
             </div>
         </div>
@@ -74,11 +74,11 @@ async def send_report_email(
 ) -> dict:
     report_url = f"{FRONTEND_URL}/report/{access_token}"
 
-    subject = f"【IPPEO】{customer_name}様 ご相談リポートが届きました"
+    subject = f"【ARUMI】{customer_name}様 ご相談リポートが届きました"
     html_content = _build_r4_html(customer_name, report_url)
 
     msg = MIMEMultipart("alternative")
-    msg["From"] = f"IPPEO <{GMAIL_ADDRESS}>"
+    msg["From"] = f"ARUMI <{GMAIL_ADDRESS}>"
     msg["To"] = to_email
     msg["Subject"] = subject
     msg["Reply-To"] = GMAIL_ADDRESS

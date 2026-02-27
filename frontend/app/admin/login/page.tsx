@@ -47,7 +47,7 @@ export default function LoginPage() {
             medical_services
           </span>
         </div>
-        <h1 className="text-2xl font-bold text-white">메디힘 이뻐</h1>
+        <h1 className="text-2xl font-bold text-white">ARUMI</h1>
         <p className="text-slate-400 text-sm mt-1">Admin Console</p>
       </div>
 
@@ -102,7 +102,7 @@ export default function LoginPage() {
       </form>
 
       <p className="text-center text-slate-500 text-xs mt-6">
-        &copy; 2026 Medihim Ippeo. All rights reserved.
+        &copy; 2026 ARUMI. All rights reserved.
       </p>
     </div>
   );

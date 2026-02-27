@@ -24,8 +24,8 @@ const MIN_TURNS_FOR_REPORT = 5;
 
 const LABELS = {
   ja: {
-    title: "IPPEO 相談室",
-    subtitle: "相談員 IPPEOコンサルタントが待機中",
+    title: "ARUMI 相談室",
+    subtitle: "相談員 ARUMIコンサルタントが待機中",
     statusOnline: "オンライン",
     loading: "チャットを準備中...",
     errorInit: "接続エラーが発生しました。再試行してください。",
@@ -38,11 +38,11 @@ const LABELS = {
     videoTitle: "関連映像おすすめ",
     videoPlaceholder: "相談内容と関連した映像が\nここに表示されます。",
     videoChannel: "YouTube チャンネルへ",
-    consultantName: "IPPEOコンサルタント",
+    consultantName: "ARUMIコンサルタント",
   },
   ko: {
-    title: "IPPEO 상담실",
-    subtitle: "상담원 IPPEO 컨설턴트가 대기중",
+    title: "ARUMI 상담실",
+    subtitle: "상담원 ARUMI 컨설턴트가 대기중",
     statusOnline: "온라인",
     loading: "채팅 준비 중...",
     errorInit: "연결 오류가 발생했습니다. 재시도해 주세요.",
@@ -55,7 +55,7 @@ const LABELS = {
     videoTitle: "관련 영상 추천",
     videoPlaceholder: "상담 내용과 관련된 영상이\n이곳에 표시됩니다.",
     videoChannel: "유튜브 채널 바로가기",
-    consultantName: "IPPEO 컨설턴트",
+    consultantName: "ARUMI 컨설턴트",
   },
 };
 
@@ -98,7 +98,7 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
 
   const [sessionId, setSessionId] = useState<string | null>(() => {
     if (typeof window !== "undefined") {
-      return sessionStorage.getItem("ippeo_chat_session_id");
+      return sessionStorage.getItem("arumi_chat_session_id");
     }
     return null;
   });
@@ -136,7 +136,7 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
         const res = await startSession(language);
         if (cancelled) return;
         setSessionId(res.session_id);
-        sessionStorage.setItem("ippeo_chat_session_id", res.session_id);
+        sessionStorage.setItem("arumi_chat_session_id", res.session_id);
         setMessages([
           {
             id: "greeting",
@@ -287,12 +287,12 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
           onClick={(e) => e.stopPropagation()}
         >
           {/* ======== Header ======== */}
-          <header className="bg-gradient-to-r from-[#FF66CC] to-[#FF88DD] px-5 py-3.5 flex items-center justify-between flex-shrink-0">
+          <header className="bg-gradient-to-r from-[#C97FAF] to-[#DFA3C7] px-5 py-3.5 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center border border-white/30">
                 <img
-                  src="/ippeo-logo.png"
-                  alt="IPPEO"
+                  src="/arumi-logo.png"
+                  alt="ARUMI"
                   className="w-7 h-7 rounded-sm"
                 />
               </div>
@@ -334,11 +334,11 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
             {/* ---- Left: Chat ---- */}
             <div className="flex-1 flex flex-col min-w-0">
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto px-5 pt-5 pb-2 bg-gradient-to-b from-[#FFF5FA] to-[#FAFAFA]">
+              <div className="flex-1 overflow-y-auto px-5 pt-5 pb-2 bg-gradient-to-b from-[#F3E6DF] to-[#FFFDFB]">
                 {isInitializing ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center">
-                      <div className="w-10 h-10 border-3 border-[#FF66CC] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                      <div className="w-10 h-10 border-3 border-[#C97FAF] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                       <p className="text-sm text-gray-400">{t.loading}</p>
                     </div>
                   </div>
@@ -351,7 +351,7 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
                       <p className="text-sm text-gray-500 mb-4">{error}</p>
                       <button
                         onClick={() => window.location.reload()}
-                        className="bg-[#FF66CC] text-white text-sm font-bold px-6 py-2.5 rounded-full hover:bg-[#E055B3]"
+                        className="bg-[#C97FAF] text-white text-sm font-bold px-6 py-2.5 rounded-full hover:bg-[#B06A99]"
                       >
                         {t.retry}
                       </button>
@@ -361,7 +361,7 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
                   <>
                     {/* Consultant intro card */}
                     <div className="flex items-center gap-2 mb-4 px-1">
-                      <span className="text-xs font-bold text-[#FF66CC]">
+                      <span className="text-xs font-bold text-[#C97FAF]">
                         {t.consultantName}
                       </span>
                     </div>
@@ -407,7 +407,7 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
               {/* Input area */}
               <div className="border-t border-gray-100 bg-white px-5 py-3 flex-shrink-0">
                 <div className="flex items-end gap-3">
-                  <div className="flex-1 flex items-end bg-gray-50 rounded-2xl border border-gray-200 px-4 py-2 focus-within:border-[#FF66CC] focus-within:ring-1 focus-within:ring-[#FF66CC]/20 transition-all">
+                  <div className="flex-1 flex items-end bg-gray-50 rounded-2xl border border-gray-200 px-4 py-2 focus-within:border-[#C97FAF] focus-within:ring-1 focus-within:ring-[#C97FAF]/20 transition-all">
                     <button className="text-gray-400 hover:text-gray-500 mr-2 mb-0.5 flex-shrink-0">
                       <span className="material-symbols-outlined text-xl">
                         add_circle
@@ -421,13 +421,13 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
                       placeholder={t.placeholder}
                       disabled={isTyping || !sessionId}
                       rows={1}
-                      className="flex-1 resize-none bg-transparent text-sm text-[#2C3E50] placeholder-gray-400 focus:outline-none disabled:text-gray-300 leading-relaxed"
+                      className="flex-1 resize-none bg-transparent text-sm text-[#3A2630] placeholder-gray-400 focus:outline-none disabled:text-gray-300 leading-relaxed"
                     />
                   </div>
                   <button
                     onClick={handleSend}
                     disabled={isTyping || !sessionId || !inputValue.trim()}
-                    className="w-10 h-10 rounded-full bg-[#FF66CC] text-white flex items-center justify-center flex-shrink-0 hover:bg-[#E055B3] active:scale-95 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-md shadow-[#FF66CC]/20"
+                    className="w-10 h-10 rounded-full bg-[#C97FAF] text-white flex items-center justify-center flex-shrink-0 hover:bg-[#B06A99] active:scale-95 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-md shadow-[#C97FAF]/20"
                   >
                     <span className="material-symbols-outlined text-lg">
                       send
@@ -441,11 +441,11 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
             </div>
 
             {/* ---- Right: YouTube Recommendations (hidden on mobile) ---- */}
-            <div className="hidden md:flex w-[320px] lg:w-[360px] flex-col border-l border-gray-100 bg-[#FAFAFA] flex-shrink-0">
+            <div className="hidden md:flex w-[320px] lg:w-[360px] flex-col border-l border-gray-100 bg-[#FFFDFB] flex-shrink-0">
               {/* Video section header */}
               <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#FF66CC] text-xl">
+                  <span className="material-symbols-outlined text-[#C97FAF] text-xl">
                     play_circle
                   </span>
                   <h3 className="text-sm font-bold text-gray-800">
@@ -501,8 +501,8 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
                         onClick={() => setActiveVideoId(video.id)}
                         className={`w-full flex gap-3 p-3 rounded-xl border transition-all text-left hover:shadow-sm ${
                           activeVideoId === video.id
-                            ? "border-[#FF66CC] bg-[#FFF5FA] shadow-sm"
-                            : "border-gray-200 bg-white hover:border-[#FF66CC]/40"
+                            ? "border-[#C97FAF] bg-[#F3E6DF] shadow-sm"
+                            : "border-gray-200 bg-white hover:border-[#C97FAF]/40"
                         }`}
                       >
                         {/* Thumbnail */}
@@ -526,7 +526,7 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
                             {video.title}
                           </p>
                           {video.procedure && (
-                            <span className="inline-block mt-1 text-[10px] font-medium text-[#FF66CC] bg-[#FFF0F8] px-2 py-0.5 rounded-full">
+                            <span className="inline-block mt-1 text-[10px] font-medium text-[#C97FAF] bg-[#F3E6DF] px-2 py-0.5 rounded-full">
                               {video.procedure}
                             </span>
                           )}
@@ -541,7 +541,7 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
               <div className="px-4 py-3 border-t border-gray-100">
                 <a
                   href="#"
-                  className="flex items-center justify-center gap-2 text-xs font-semibold text-[#FF66CC] hover:text-[#E055B3] transition-colors py-2 px-4 rounded-lg hover:bg-[#FFF5FA]"
+                  className="flex items-center justify-center gap-2 text-xs font-semibold text-[#C97FAF] hover:text-[#B06A99] transition-colors py-2 px-4 rounded-lg hover:bg-[#F3E6DF]"
                 >
                   <span className="material-symbols-outlined text-base">
                     smart_display
@@ -556,12 +556,12 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
           <div className="hidden md:flex items-center justify-between px-5 py-2 bg-gray-50 border-t border-gray-100 flex-shrink-0">
             <div className="flex items-center gap-2">
               <img
-                src="/ippeo-logo.png"
-                alt="IPPEO"
+                src="/arumi-logo.png"
+                alt="ARUMI"
                 className="w-4 h-4 rounded-sm opacity-50"
               />
               <span className="text-[10px] text-gray-400">
-                IPPEO | Korean Beauty Medical Consulting
+                ARUMI | Korean Beauty Medical Consulting
               </span>
             </div>
             <button

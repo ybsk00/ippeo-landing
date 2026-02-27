@@ -62,12 +62,12 @@ export default function ChatInput({
             placeholder={placeholder}
             disabled={disabled}
             rows={1}
-            className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-[#2C3E50] placeholder-gray-400 focus:outline-none focus:border-[#FF66CC] focus:ring-1 focus:ring-[#FF66CC]/30 disabled:bg-gray-50 disabled:text-gray-400 transition-colors font-[Noto_Sans_JP]"
+            className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-[#3A2630] placeholder-gray-400 focus:outline-none focus:border-[#C97FAF] focus:ring-1 focus:ring-[#C97FAF]/30 disabled:bg-gray-50 disabled:text-gray-400 transition-colors font-[Noto_Sans_JP]"
           />
           <button
             onClick={handleSend}
             disabled={disabled || !value.trim()}
-            className="w-10 h-10 rounded-full bg-[#FF66CC] text-white flex items-center justify-center flex-shrink-0 hover:bg-[#E055B3] active:scale-95 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all"
+            className="w-10 h-10 rounded-full bg-[#C97FAF] text-white flex items-center justify-center flex-shrink-0 hover:bg-[#B06A99] active:scale-95 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all"
             aria-label={language === "ko" ? "전송" : "送信"}
           >
             <span className="material-symbols-outlined text-xl">

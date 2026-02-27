@@ -21,12 +21,12 @@ export default function ChatMessage({ message, language }: ChatMessageProps) {
     );
   }
 
-  // User messages (right-aligned, coral pink)
+  // User messages (right-aligned, warm beige)
   if (isUser) {
     return (
       <div className="flex justify-end mb-4">
         <div className="max-w-[80%]">
-          <div className="bg-[#FFE0F0] text-[#2C3E50] rounded-2xl rounded-tr-sm px-4 py-3">
+          <div className="bg-[#F3E6DF] text-[#3A2630] rounded-2xl rounded-tr-sm px-4 py-3">
             <p className="text-sm leading-relaxed whitespace-pre-wrap">
               {message.content}
             </p>
@@ -44,10 +44,10 @@ export default function ChatMessage({ message, language }: ChatMessageProps) {
     <div className="mb-4">
       <div className="flex items-start gap-3 max-w-[85%]">
         {/* Avatar */}
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FF66CC] to-[#FF99DD] flex items-center justify-center flex-shrink-0 shadow-sm">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#C97FAF] to-[#DFA3C7] flex items-center justify-center flex-shrink-0 shadow-sm">
           <img
-            src="/ippeo-logo.png"
-            alt="IPPEO"
+            src="/arumi-logo.png"
+            alt="ARUMI"
             className="w-5 h-5 rounded-sm"
           />
         </div>
@@ -55,7 +55,7 @@ export default function ChatMessage({ message, language }: ChatMessageProps) {
         {/* Bubble */}
         <div>
           <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm border border-gray-100">
-            <p className="text-sm text-[#2C3E50] leading-relaxed whitespace-pre-wrap">
+            <p className="text-sm text-[#3A2630] leading-relaxed whitespace-pre-wrap">
               {message.content}
             </p>
           </div>

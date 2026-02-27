@@ -44,7 +44,7 @@ export default function Sidebar() {
         </div>
         <div>
           <h1 className="text-white text-lg font-bold leading-tight">
-            메디힘 이뻐
+            ARUMI
           </h1>
           <p className="text-slate-400 text-xs">Admin Console</p>
         </div>
