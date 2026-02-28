@@ -114,11 +114,19 @@ async def generate_consultation_response(
         keywords = await extract_keywords_from_messages(messages, language)
     logger.info(f"[ConsultationAgent] Keywords: {keywords}, Category: {category}")
 
+    # 최신 사용자 메시지 추출 (포커스 검색용)
+    latest_user_msg = ""
+    for m in reversed(messages):
+        if m["role"] == "user":
+            latest_user_msg = m["content"]
+            break
+
     rag_results = []
     if keywords:
         try:
             rag_results = await search_relevant_faq(
-                keywords, category, match_threshold=0.55, match_count=8
+                keywords, category, match_threshold=0.55, match_count=8,
+                latest_message=latest_user_msg,
             )
             logger.info(f"[ConsultationAgent] RAG results: {len(rag_results)}")
         except Exception as e:
