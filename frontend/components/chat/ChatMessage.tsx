@@ -1,5 +1,12 @@
-import type { ChatMessage as ChatMessageType, Language } from "@/lib/chatApi";
+import type { ChatMessage as ChatMessageType, Language, AgentType } from "@/lib/chatApi";
 import RAGReferenceCard from "./RAGReferenceCard";
+
+const AGENT_LABELS: Record<AgentType, { ja: string; ko: string }> = {
+  greeting: { ja: "アシスタント", ko: "안내" },
+  general: { ja: "アシスタント", ko: "안내" },
+  consultation: { ja: "カウンセラー", ko: "상담실장" },
+  medical: { ja: "専門コンサルタント", ko: "전문상담" },
+};
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -40,6 +47,10 @@ export default function ChatMessage({ message, language }: ChatMessageProps) {
   }
 
   // AI messages (left-aligned, white with shadow)
+  const agentLabel = message.agent_type
+    ? AGENT_LABELS[message.agent_type]?.[language] || ""
+    : "";
+
   return (
     <div className="mb-4">
       <div className="flex items-start gap-3 max-w-[85%]">
@@ -54,6 +65,11 @@ export default function ChatMessage({ message, language }: ChatMessageProps) {
 
         {/* Bubble */}
         <div>
+          {agentLabel && (
+            <p className="text-[10px] text-[#C97FAF] font-medium mb-1 ml-1">
+              {agentLabel}
+            </p>
+          )}
           <div className="bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm border border-gray-100">
             <p className="text-sm text-[#3A2630] leading-relaxed whitespace-pre-wrap">
               {message.content}

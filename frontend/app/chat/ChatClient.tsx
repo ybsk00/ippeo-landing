@@ -6,9 +6,11 @@ import ChatMessage from "@/components/chat/ChatMessage";
 import ChatInput from "@/components/chat/ChatInput";
 import TypingIndicator from "@/components/chat/TypingIndicator";
 import ReportPrompt from "@/components/chat/ReportPrompt";
+import EmailConsentCard from "@/components/chat/EmailConsentCard";
 import {
   startSession,
   sendMessage,
+  confirmEmail,
   requestReport,
   checkReportStatus,
   type ChatMessage as ChatMessageType,
@@ -30,6 +32,7 @@ export default function ChatClient() {
   const [reportToken, setReportToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const reportPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -109,9 +112,15 @@ export default function ChatClient() {
         role: "assistant",
         content: res.content,
         rag_references: res.rag_references,
+        agent_type: res.agent_type,
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, aiMsg]);
+
+      // 이메일 동의 대기
+      if (res.pending_email) {
+        setPendingEmail(res.pending_email);
+      }
 
       // Check if report generation is possible
       if (
@@ -240,6 +249,28 @@ export default function ChatClient() {
         ))}
 
         {isTyping && <TypingIndicator language={lang} />}
+
+        {/* Email Consent */}
+        {pendingEmail && sessionId && (
+          <EmailConsentCard
+            email={pendingEmail}
+            language={lang}
+            onConsent={async (agreed) => {
+              const res = await confirmEmail(sessionId, pendingEmail, agreed);
+              if (agreed && res.message) {
+                const confirmMsg: ChatMessageType = {
+                  id: `consent-${Date.now()}`,
+                  role: "assistant",
+                  content: res.message,
+                  agent_type: "consultation",
+                  timestamp: new Date().toISOString(),
+                };
+                setMessages((prev) => [...prev, confirmMsg]);
+              }
+              setPendingEmail(null);
+            }}
+          />
+        )}
 
         {/* Report Prompt */}
         {canGenerateReport && !reportToken && (

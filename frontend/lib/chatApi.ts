@@ -20,6 +20,7 @@ export interface ChatMessage {
   role: "user" | "assistant" | "system";
   content: string;
   rag_references?: RAGReference[];
+  agent_type?: AgentType;
   timestamp: string;
 }
 
@@ -29,10 +30,14 @@ export interface StartSessionResponse {
   greeting: string;
 }
 
+export type AgentType = "greeting" | "general" | "consultation" | "medical";
+
 export interface SendMessageResponse {
   content: string;
   rag_references?: RAGReference[];
   can_generate_report: boolean;
+  agent_type?: AgentType;
+  pending_email?: string;
 }
 
 export interface EndSessionResponse {
@@ -166,5 +171,19 @@ export function requestReport(
   return fetchChatAPI("/chat/end", {
     method: "POST",
     body: JSON.stringify({ session_id: sessionId, ...opts }),
+  });
+}
+
+/**
+ * 이메일 수집 동의 확인
+ */
+export function confirmEmail(
+  sessionId: string,
+  email: string,
+  agreed: boolean
+): Promise<{ status: string; message?: string }> {
+  return fetchChatAPI("/chat/confirm-email", {
+    method: "POST",
+    body: JSON.stringify({ session_id: sessionId, email, agreed }),
   });
 }

@@ -7,7 +7,8 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import BaseModel
 from models.schemas import ChatStartRequest, ChatMessageRequest, ChatEndRequest
 from services.supabase_client import get_supabase
-from agents.chat_agent import get_greeting, run_chat_rag
+from agents.chat_agent import get_greeting, run_chat_rag  # noqa: F401 — 레거시 호환
+from agents.chat_router import run_multi_agent_chat
 from agents.chat_to_consultation import convert_chat_to_consultation
 from agents.pipeline import run_pipeline
 
@@ -151,11 +152,17 @@ async def send_message(data: ChatMessageRequest):
     )
     messages = history_result.data or []
 
-    # RAG + 응답 생성
+    # 멀티에이전트 응답 생성
+    agent_type = "general"
     try:
-        response_text, rag_references = await run_chat_rag(messages, language)
+        result = await run_multi_agent_chat(
+            messages, language, session_id=data.session_id
+        )
+        response_text = result["response"]
+        rag_references = result["rag_references"]
+        agent_type = result["agent_type"]
     except Exception as e:
-        logger.error(f"[Chat] AI response failed: {e}", exc_info=True)
+        logger.error(f"[Chat] Multi-agent failed: {e}", exc_info=True)
         # 폴백 응답
         if language == "ja":
             response_text = (
@@ -181,10 +188,78 @@ async def send_message(data: ChatMessageRequest):
     user_msg_count = sum(1 for m in messages if m["role"] == "user")
     can_generate_report = user_msg_count >= 5  # 사용자 메시지 5개 이상
 
-    return {
+    resp = {
         "content": response_text,
         "rag_references": rag_references,
         "can_generate_report": can_generate_report,
+        "agent_type": agent_type,
+    }
+    # 이메일 감지 시 동의 대기 상태 전달
+    if result.get("pending_email"):
+        resp["pending_email"] = result["pending_email"]
+    return resp
+
+
+# ============================================
+# POST /api/chat/confirm-email — 이메일 수집 동의 확인
+# ============================================
+class ConfirmEmailRequest(BaseModel):
+    session_id: str
+    email: str
+    agreed: bool
+
+
+@router.post("/confirm-email")
+async def confirm_email(data: ConfirmEmailRequest):
+    """사용자가 이메일 수집에 동의한 경우 저장"""
+    db = get_supabase()
+
+    if not data.agreed:
+        return {"status": "declined"}
+
+    # 세션 확인
+    session_result = (
+        db.table("chat_sessions")
+        .select("id, language")
+        .eq("id", data.session_id)
+        .single()
+        .execute()
+    )
+    if not session_result.data:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    # 이메일 저장
+    db.table("chat_sessions").update({
+        "customer_email": data.email,
+    }).eq("id", data.session_id).execute()
+
+    language = session_result.data.get("language", "ja")
+
+    # 동의 감사 메시지 저장
+    if language == "ja":
+        confirm_msg = (
+            "ご同意ありがとうございます！リポートの準備ができ次第、"
+            f"{data.email} 宛にメールでご案内いたします。\n\n"
+            "他にご質問がございましたら、お気軽にどうぞ！"
+        )
+    else:
+        confirm_msg = (
+            "동의해 주셔서 감사합니다! 리포트가 준비되는 대로 "
+            f"{data.email}으로 안내드리겠습니다.\n\n"
+            "다른 궁금한 점이 있으시면 편하게 말씀해 주세요!"
+        )
+
+    db.table("chat_messages").insert({
+        "session_id": data.session_id,
+        "role": "assistant",
+        "content": confirm_msg,
+    }).execute()
+
+    logger.info(f"[Chat] Email consent confirmed: {data.email} for session {data.session_id[:8]}")
+
+    return {
+        "status": "confirmed",
+        "message": confirm_msg,
     }
 
 
