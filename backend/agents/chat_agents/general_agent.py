@@ -55,7 +55,7 @@ async def generate_general_response(
     # 대화 이력 구성 (최근 10개)
     recent = messages[-10:]
     role_user = "ユーザー" if language == "ja" else "사용자"
-    role_ai = "アシスタント" if language == "ja" else "상담사"
+    role_ai = "アシスタント" if language == "ja" else "안내"
 
     history_lines = []
     for m in recent:

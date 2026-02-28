@@ -98,7 +98,7 @@ async def generate_medical_response(
     # 3. 대화 이력 구성
     recent = messages[-20:]
     role_user = "ユーザー" if language == "ja" else "사용자"
-    role_ai = "専門コンサルタント" if language == "ja" else "전문 상담원"
+    role_ai = "専門コンサルタント" if language == "ja" else "전문상담"
 
     history_lines = []
     for m in recent:
