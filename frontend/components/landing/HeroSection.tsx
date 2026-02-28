@@ -26,17 +26,22 @@ export default function HeroSection({ t, lang }: Props) {
 
             {/* Title */}
             <h1
-              className="text-5xl font-black leading-[1.1] tracking-tight text-[#3A2630] sm:text-6xl lg:text-7xl"
-              style={{ fontFamily: lang === "ja" ? "'Noto Sans JP', sans-serif" : "'Noto Sans KR', sans-serif" }}
+              className={`font-black leading-[1.1] tracking-tight text-[#3A2630] text-4xl sm:text-5xl lg:text-7xl${
+                lang === "ko" ? " break-keep" : ""
+              }`}
+              style={{
+                fontFamily: lang === "ja" ? "'Noto Sans JP', sans-serif" : "'Noto Sans KR', sans-serif",
+                textWrap: "balance" as never,
+              }}
             >
               {t.hero_title_1}
               <br />
               <span className="text-gradient">{t.hero_title_accent}</span>
-              {t.hero_title_2}
+              {lang === "ko" ? " " : ""}{t.hero_title_2}
             </h1>
 
             {/* Description */}
-            <p className="text-lg text-[#7B6670] sm:text-xl leading-relaxed max-w-lg font-medium">
+            <p className={`text-lg text-[#7B6670] sm:text-xl leading-relaxed max-w-lg font-medium${lang === "ko" ? " break-keep" : ""}`}>
               {t.hero_desc}
             </p>
 

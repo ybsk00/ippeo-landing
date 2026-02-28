@@ -431,7 +431,7 @@ async def admin_list_sessions(
     offset = (page - 1) * per_page
 
     query = db.table("chat_sessions").select(
-        "id, visitor_id, language, status, consultation_id, report_id, created_at, updated_at",
+        "id, visitor_id, language, status, consultation_id, report_id, cta_level, customer_email, customer_name, created_at, updated_at",
         count="exact",
     )
 
@@ -531,6 +531,58 @@ async def admin_session_detail(session_id: str):
         "messages": msg_result.data or [],
         "consultation": consultation,
         "report": report,
+    }
+
+
+# POST /api/chat/admin/sessions/{session_id}/transfer — 상담관리로 이전
+class TransferRequest(BaseModel):
+    customer_name: str = ""
+    customer_email: str = ""
+
+
+@router.post("/admin/sessions/{session_id}/transfer")
+async def admin_transfer_to_consultation(session_id: str, data: TransferRequest):
+    """챗봇 세션을 상담관리(consultation)로 이전. 파이프라인은 실행하지 않음."""
+    db = get_supabase()
+
+    # 세션 확인
+    session_result = (
+        db.table("chat_sessions")
+        .select("id, status, consultation_id, language")
+        .eq("id", session_id)
+        .single()
+        .execute()
+    )
+    if not session_result.data:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    session = session_result.data
+
+    # 이미 이전된 경우
+    if session.get("consultation_id"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Already transferred to consultation {session['consultation_id']}",
+        )
+
+    # convert_chat_to_consultation 호출 (파이프라인 미실행)
+    try:
+        consultation_id = await convert_chat_to_consultation(
+            session_id=session_id,
+            customer_name=data.customer_name,
+            customer_email=data.customer_email,
+            language=session.get("language", "ja"),
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    logger.info(
+        f"[Admin] Session {session_id[:8]} transferred → Consultation {consultation_id[:8]}"
+    )
+
+    return {
+        "status": "transferred",
+        "consultation_id": consultation_id,
     }
 
 

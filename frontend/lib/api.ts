@@ -447,6 +447,9 @@ export interface ChatSession {
   status: string;
   consultation_id: string | null;
   report_id: string | null;
+  cta_level: "hot" | "warm" | "cool" | null;
+  customer_email: string | null;
+  customer_name: string | null;
   created_at: string;
   updated_at: string;
   message_count: number;
@@ -507,6 +510,14 @@ export const chatAdminAPI = {
       {
         method: "POST",
         body: JSON.stringify({ email, customer_name: customerName || "" }),
+      }
+    ),
+  transfer: (sessionId: string, customerName: string, customerEmail: string) =>
+    fetchAPI<{ status: string; consultation_id: string }>(
+      `/chat/admin/sessions/${sessionId}/transfer`,
+      {
+        method: "POST",
+        body: JSON.stringify({ customer_name: customerName, customer_email: customerEmail }),
       }
     ),
 };

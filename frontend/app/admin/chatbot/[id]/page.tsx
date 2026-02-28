@@ -12,10 +12,10 @@ export default function ChatbotSessionDetail() {
 
   const [data, setData] = useState<ChatSessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState("");
-  const [customerName, setCustomerName] = useState("");
-  const [sending, setSending] = useState(false);
-  const [sendResult, setSendResult] = useState<{
+  const [transferName, setTransferName] = useState("");
+  const [transferEmail, setTransferEmail] = useState("");
+  const [transferring, setTransferring] = useState(false);
+  const [transferResult, setTransferResult] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
@@ -26,44 +26,40 @@ export default function ChatbotSessionDetail() {
       .sessionDetail(sessionId)
       .then((d) => {
         setData(d);
-        if (d.consultation?.customer_email) {
-          setEmail(d.consultation.customer_email);
-        }
-        if (d.consultation?.customer_name) {
-          setCustomerName(d.consultation.customer_name);
-        }
+        if (d.session.customer_name) setTransferName(d.session.customer_name);
+        if (d.session.customer_email) setTransferEmail(d.session.customer_email);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [sessionId]);
 
-  async function handleSendEmail() {
-    if (!email.trim() || sending) return;
-    setSending(true);
-    setSendResult(null);
+  async function handleTransfer() {
+    if (transferring) return;
+    setTransferring(true);
+    setTransferResult(null);
     try {
-      const res = await chatAdminAPI.sendEmail(
+      const res = await chatAdminAPI.transfer(
         sessionId,
-        email.trim(),
-        customerName.trim() || undefined
+        transferName.trim(),
+        transferEmail.trim()
       );
-      setSendResult({
+      setTransferResult({
         type: "success",
-        message:
-          res.status === "sent"
-            ? `이메일이 ${email}로 발송되었습니다.`
-            : `리포트 생성 중입니다. 완료 후 ${email}로 자동 발송됩니다.`,
+        message: "상담관리로 이전되었습니다.",
       });
+      // 데이터 새로고침
+      const updated = await chatAdminAPI.sessionDetail(sessionId);
+      setData(updated);
     } catch (err) {
-      setSendResult({
+      setTransferResult({
         type: "error",
         message:
           err instanceof Error
             ? err.message
-            : "이메일 발송에 실패했습니다.",
+            : "이전에 실패했습니다.",
       });
     } finally {
-      setSending(false);
+      setTransferring(false);
     }
   }
 
@@ -214,62 +210,78 @@ export default function ChatbotSessionDetail() {
               </div>
             )}
 
-            {/* Email Section */}
+            {/* Transfer to Consultation */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
               <h3 className="text-sm font-bold text-slate-800 mb-4">
-                이메일 발송
+                상담관리 이전
               </h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-slate-500 mb-1 block">
-                    고객명
-                  </label>
-                  <input
-                    type="text"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    placeholder="고객명 입력"
-                    className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-slate-500 mb-1 block">
-                    이메일 주소
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="이메일 주소 입력"
-                    className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  />
-                </div>
-                <button
-                  onClick={handleSendEmail}
-                  disabled={!email.trim() || sending}
-                  className="w-full flex items-center justify-center gap-2 bg-primary text-white text-sm font-bold py-2.5 rounded-lg hover:bg-primary/90 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
-                >
-                  {sending ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <span className="material-symbols-outlined text-lg">
-                      mail
-                    </span>
-                  )}
-                  {sending ? "처리 중..." : "리포트 발송"}
-                </button>
-                {sendResult && (
-                  <div
-                    className={`mt-2 text-xs p-3 rounded-lg ${
-                      sendResult.type === "success"
-                        ? "bg-green-50 text-green-700 border border-green-200"
-                        : "bg-red-50 text-red-700 border border-red-200"
-                    }`}
-                  >
-                    {sendResult.message}
+              {consultation ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg p-3">
+                    <span className="material-symbols-outlined text-sm">check_circle</span>
+                    이전 완료
                   </div>
-                )}
-              </div>
+                  <Link
+                    href={`/admin/consultations/${consultation.id}`}
+                    className="flex items-center gap-1 text-primary text-xs font-semibold hover:underline"
+                  >
+                    <span className="material-symbols-outlined text-sm">open_in_new</span>
+                    상담 상세 보기
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-slate-500 mb-1 block">
+                      고객명
+                    </label>
+                    <input
+                      type="text"
+                      value={transferName}
+                      onChange={(e) => setTransferName(e.target.value)}
+                      placeholder="고객명 입력"
+                      className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-500 mb-1 block">
+                      이메일 주소
+                    </label>
+                    <input
+                      type="email"
+                      value={transferEmail}
+                      onChange={(e) => setTransferEmail(e.target.value)}
+                      placeholder="이메일 주소 입력"
+                      className="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                  <button
+                    onClick={handleTransfer}
+                    disabled={transferring}
+                    className="w-full flex items-center justify-center gap-2 bg-primary text-white text-sm font-bold py-2.5 rounded-lg hover:bg-primary/90 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {transferring ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <span className="material-symbols-outlined text-lg">
+                        swap_horiz
+                      </span>
+                    )}
+                    {transferring ? "이전 중..." : "상담관리로 이전"}
+                  </button>
+                  {transferResult && (
+                    <div
+                      className={`mt-2 text-xs p-3 rounded-lg ${
+                        transferResult.type === "success"
+                          ? "bg-green-50 text-green-700 border border-green-200"
+                          : "bg-red-50 text-red-700 border border-red-200"
+                      }`}
+                    >
+                      {transferResult.message}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

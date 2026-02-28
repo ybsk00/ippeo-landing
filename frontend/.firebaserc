@@ -1,6 +1,7 @@
 {
   "projects": {
     "default": "ippeo-medhim",
-    "landing": "ippeo-langding"
+    "landing": "ippeo-langding",
+    "arumi": "arumi-landing"
   }
 }
