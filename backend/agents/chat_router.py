@@ -180,6 +180,15 @@ async def run_multi_agent_chat(
     user_turn_count = sum(1 for m in messages if m["role"] == "user")
 
     if intent == "greeting":
+        # 대화 중 인사(2턴 이상)는 General Agent로 → 자연스러운 응답
+        if user_turn_count > 1:
+            response = await generate_general_response(messages, language)
+            return {
+                "response": response,
+                "rag_references": [],
+                "agent_type": "general",
+            }
+        # 첫 인사만 하드코딩 greeting
         greeting = get_greeting(language)
         return {
             "response": greeting,
