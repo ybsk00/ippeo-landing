@@ -3,12 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import ChatMessage from "./ChatMessage";
 import TypingIndicator from "./TypingIndicator";
-import ReportPrompt from "./ReportPrompt";
 import {
   startSession,
   sendMessage,
-  requestReport,
-  checkReportStatus,
   type ChatMessage as ChatMessageType,
   type RAGReference,
   type Language,
@@ -20,8 +17,6 @@ interface Props {
   onClose: () => void;
 }
 
-const MIN_TURNS_FOR_REPORT = 5;
-
 const LABELS = {
   ja: {
     title: "ARUMI 相談室",
@@ -30,7 +25,6 @@ const LABELS = {
     loading: "チャットを準備中...",
     errorInit: "接続エラーが発生しました。再試行してください。",
     errorSend: "メッセージの送信に失敗しました。",
-    errorReport: "リポートの作成に失敗しました。",
     retry: "再試行",
     placeholder: "궁금한 내용을 물어보세요...",
     disclaimer:
@@ -47,7 +41,6 @@ const LABELS = {
     loading: "채팅 준비 중...",
     errorInit: "연결 오류가 발생했습니다. 재시도해 주세요.",
     errorSend: "메시지 전송에 실패했습니다.",
-    errorReport: "리포트 생성에 실패했습니다.",
     retry: "재시도",
     placeholder: "궁금한 내용을 물어보세요...",
     disclaimer:
@@ -104,9 +97,6 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
   });
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [isTyping, setIsTyping] = useState(false);
-  const [canGenerateReport, setCanGenerateReport] = useState(false);
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [reportToken, setReportToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
@@ -114,8 +104,6 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const reportPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const userTurnCount = useRef(0);
 
   const youtubeVideos = extractYouTubeVideos(messages);
 
@@ -160,13 +148,6 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [language]);
 
-  // Cleanup polling
-  useEffect(() => {
-    return () => {
-      if (reportPollRef.current) clearInterval(reportPollRef.current);
-    };
-  }, []);
-
   // Auto-resize textarea
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -187,7 +168,6 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
       timestamp: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMsg]);
-    userTurnCount.current += 1;
     setInputValue("");
     setIsTyping(true);
     setError(null);
@@ -202,13 +182,6 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, aiMsg]);
-
-      if (
-        res.can_generate_report ||
-        userTurnCount.current >= MIN_TURNS_FOR_REPORT
-      ) {
-        setCanGenerateReport(true);
-      }
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -221,47 +194,6 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
       ]);
     } finally {
       setIsTyping(false);
-    }
-  }
-
-  // Report request
-  async function handleReportRequest(name: string, email: string) {
-    if (!sessionId || isGeneratingReport) return;
-
-    setIsGeneratingReport(true);
-    setError(null);
-
-    try {
-      await requestReport(sessionId, {
-        customer_name: name,
-        customer_email: email,
-      });
-
-      reportPollRef.current = setInterval(async () => {
-        try {
-          const status = await checkReportStatus(sessionId);
-          if (status.status === "ready" && status.access_token) {
-            setReportToken(status.access_token);
-            setIsGeneratingReport(false);
-            if (reportPollRef.current) {
-              clearInterval(reportPollRef.current);
-              reportPollRef.current = null;
-            }
-          } else if (status.status === "failed") {
-            setIsGeneratingReport(false);
-            setError(t.errorReport);
-            if (reportPollRef.current) {
-              clearInterval(reportPollRef.current);
-              reportPollRef.current = null;
-            }
-          }
-        } catch {
-          // silently retry
-        }
-      }, 5000);
-    } catch {
-      setIsGeneratingReport(false);
-      setError(t.errorReport);
     }
   }
 
@@ -374,23 +306,6 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
                       />
                     ))}
                     {isTyping && <TypingIndicator language={language} />}
-
-                    {canGenerateReport && !reportToken && (
-                      <ReportPrompt
-                        language={language}
-                        onRequest={handleReportRequest}
-                        isGenerating={isGeneratingReport}
-                        reportToken={reportToken}
-                      />
-                    )}
-                    {reportToken && (
-                      <ReportPrompt
-                        language={language}
-                        onRequest={handleReportRequest}
-                        isGenerating={false}
-                        reportToken={reportToken}
-                      />
-                    )}
 
                     {error && sessionId && (
                       <div className="mb-3">
