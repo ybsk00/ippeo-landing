@@ -52,12 +52,10 @@ async def _retry_generate(model, prompt: str, max_retries: int = 3):
 
 
 async def generate_text(prompt: str, system_instruction: str = "") -> str:
-    kwargs: dict = {
-        "generation_config": {"thinking_config": {"thinking_budget": 0}},
-    }
+    kwargs: dict = {}
     if system_instruction:
         kwargs["system_instruction"] = system_instruction
-    model = genai.GenerativeModel("gemini-2.5-flash", **kwargs)
+    model = genai.GenerativeModel("gemini-2.5-flash-lite", **kwargs)
     response = await _retry_generate(model, prompt)
     return response.text
 
