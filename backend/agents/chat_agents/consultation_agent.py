@@ -185,6 +185,7 @@ async def generate_consultation_response(
 {history_text}{report_hint}
 
 上記の会話に対して、カウンセラーとして自然に返答してください。
+★参考資料の中にユーザーの質問と無関係な施術の資料が含まれている場合は無視してください。会話のテーマに合った資料のみ活用すること。
 ★必ず最後に関連する質問や次の話題を提案して、会話が続くようにしてください。前に使った質問と同じものは使わないこと。"""
     else:
         prompt = f"""아래 참고자료와 대화 이력을 바탕으로 상담실장으로서 답변해주세요.
@@ -197,6 +198,7 @@ async def generate_consultation_response(
 {history_text}{report_hint}
 
 위 대화에 대해 상담실장으로서 자연스럽게 답변해주세요.
+★참고자료 중 사용자의 질문과 무관한 시술 자료가 포함되어 있으면 무시하세요. 대화 주제에 맞는 자료만 활용할 것.
 ★반드시 마지막에 관련 질문이나 다음 화제를 제안해서 대화가 이어지게 해주세요. 이전에 사용한 질문과 같은 것은 사용하지 마세요."""
 
     response = await generate_text(prompt, system_instruction=system_prompt)
