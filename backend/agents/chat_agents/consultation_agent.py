@@ -102,12 +102,16 @@ async def generate_consultation_response(
     category: str = "plastic_surgery",
     user_turn_count: int = 0,
     cta_level: str = "cool",
+    pre_extracted_keywords: list[str] | None = None,
 ) -> tuple[str, list[dict]]:
     """상담실장 에이전트 응답 생성. Returns: (response_text, rag_references)"""
     system_prompt = SYSTEM_PROMPT_JA if language == "ja" else SYSTEM_PROMPT_KO
 
-    # 1. 키워드 추출 + RAG 검색
-    keywords = await extract_keywords_from_messages(messages, language)
+    # 1. 키워드: 미리 추출된 것이 있으면 재사용, 없으면 직접 추출
+    if pre_extracted_keywords is not None:
+        keywords = pre_extracted_keywords
+    else:
+        keywords = await extract_keywords_from_messages(messages, language)
     logger.info(f"[ConsultationAgent] Keywords: {keywords}, Category: {category}")
 
     rag_results = []
@@ -142,9 +146,9 @@ async def generate_consultation_response(
         history_lines.append(f"{label}: {m['content']}")
     history_text = "\n".join(history_lines)
 
-    # 4. 리포트 안내 힌트 (CTA Hot이거나 5턴 이상)
+    # 4. 리포트 안내 힌트 (CTA Warm 이상이거나 3턴 이상)
     report_hint = ""
-    should_hint_report = cta_level == "hot" or user_turn_count >= 5
+    should_hint_report = cta_level in ("hot", "warm") or user_turn_count >= 3
     if should_hint_report:
         if language == "ja":
             report_hint = (

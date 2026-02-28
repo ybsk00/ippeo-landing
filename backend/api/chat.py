@@ -188,16 +188,12 @@ async def send_message(data: ChatMessageRequest):
     user_msg_count = sum(1 for m in messages if m["role"] == "user")
     can_generate_report = user_msg_count >= 5  # 사용자 메시지 5개 이상
 
-    resp = {
+    return {
         "content": response_text,
         "rag_references": rag_references,
         "can_generate_report": can_generate_report,
         "agent_type": agent_type,
     }
-    # 이메일 감지 시 동의 대기 상태 전달
-    if result.get("pending_email"):
-        resp["pending_email"] = result["pending_email"]
-    return resp
 
 
 # ============================================

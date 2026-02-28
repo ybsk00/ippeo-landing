@@ -1,9 +1,11 @@
+import asyncio
 import json
 import logging
 import re
 
 from services.gemini_client import generate_json
-from agents.chat_agent import get_greeting
+from services.supabase_client import get_supabase
+from agents.chat_agent import get_greeting, extract_keywords_from_messages
 from agents.chat_agents.general_agent import generate_general_response
 from agents.chat_agents.consultation_agent import generate_consultation_response
 from agents.chat_agents.medical_agent import generate_medical_response
@@ -75,13 +77,23 @@ JSON 형식으로 반환:
 # 이메일 정규식
 EMAIL_PATTERN = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
 
+# 동의/거절 패턴
+CONSENT_YES_PATTERN = re.compile(
+    r"(はい|お願い|同意|네|동의|좋아요|부탁|OK|ok|예|ええ|うん|そうして|承諾|了解|オッケー)",
+    re.IGNORECASE,
+)
+CONSENT_NO_PATTERN = re.compile(
+    r"(いいえ|結構|やめ|아니|싫|괜찮|不要|いらない|だめ|거절|사양)",
+    re.IGNORECASE,
+)
+
 
 async def route_message(
     messages: list[dict],
     language: str = "ja",
 ) -> dict:
     """사용자 메시지의 의도를 분류.
-    Returns: {"intent": "...", "category": "...", "email": "..." or None}
+    Returns: {"intent": "...", "category": "...", "email": "..." or None, "cta_level": "..."}
     """
     # 최신 사용자 메시지
     latest_user_msg = ""
@@ -91,7 +103,7 @@ async def route_message(
             break
 
     if not latest_user_msg:
-        return {"intent": "greeting", "category": None, "email": None}
+        return {"intent": "greeting", "category": None, "email": None, "cta_level": "cool"}
 
     # 이메일 감지
     email_match = EMAIL_PATTERN.search(latest_user_msg)
@@ -155,48 +167,42 @@ async def run_multi_agent_chat(
     session_id: str | None = None,
 ) -> dict:
     """멀티에이전트 오케스트레이터.
-    1. Intent Router로 의도 분류
-    2. 이메일 감지 시 DB 업데이트
-    3. 해당 에이전트에 디스패치
-    4. 응답 + 메타데이터 반환
+    1. 이메일 동의 상태 확인 (대화형)
+    2. Router + 키워드 추출 병렬 실행
+    3. 이메일 감지 시 대화형 동의 요청
+    4. 해당 에이전트에 디스패치 (pre-extracted keywords 전달)
 
     Returns: {
         "response": str,
         "rag_references": list[dict],
-        "agent_type": str,  # "greeting" | "general" | "consultation" | "medical"
+        "agent_type": str,
     }
     """
-    # 1. 의도 분류
-    route_result = await route_message(messages, language)
+    # 0. 이메일 동의 대기 상태 확인
+    if session_id:
+        consent_result = await _check_email_consent(messages, session_id, language)
+        if consent_result:
+            return consent_result
+
+    # 1. Router + 키워드 추출 병렬 실행
+    route_task = route_message(messages, language)
+    keyword_task = extract_keywords_from_messages(messages, language)
+    route_result, pre_keywords = await asyncio.gather(route_task, keyword_task)
+
     intent = route_result["intent"]
     category = route_result["category"] or "plastic_surgery"
     detected_email = route_result["email"]
     cta_level = route_result.get("cta_level", "cool")
 
-    # 2. 이메일 감지 시 → 동의 요청 (바로 저장하지 않음)
-    if detected_email:
-        if language == "ja":
-            response = (
-                f"{detected_email} 宛にご相談内容をまとめた分析リポートをお送りいたします。\n\n"
-                "リポート送付のため、メールアドレスの収集・利用に同意いただけますか？"
-            )
-        else:
-            response = (
-                f"{detected_email}으로 상담 내용을 정리한 분석 리포트를 보내드리겠습니다.\n\n"
-                "리포트 발송을 위해 이메일 주소 수집 및 이용에 동의하시겠습니까?"
-            )
-        return {
-            "response": response,
-            "rag_references": [],
-            "agent_type": "consultation",
-            "pending_email": detected_email,
-        }
+    # 2. 이메일 감지 시 → 대화형 동의 요청
+    if detected_email and session_id:
+        return await _handle_email_detected(detected_email, session_id, language)
 
-    # 4. 에이전트 디스패치
+    # 3. 에이전트 디스패치
     user_turn_count = sum(1 for m in messages if m["role"] == "user")
 
     if intent == "greeting":
-        # 대화 중 인사(2턴 이상)는 General Agent로 → 자연스러운 응답
+        # 대화 중 인사(2턴 이상)는 General Agent로
         if user_turn_count > 1:
             response = await generate_general_response(messages, language)
             return {
@@ -204,7 +210,6 @@ async def run_multi_agent_chat(
                 "rag_references": [],
                 "agent_type": "general",
             }
-        # 첫 인사만 하드코딩 greeting
         greeting = get_greeting(language)
         return {
             "response": greeting,
@@ -222,7 +227,8 @@ async def run_multi_agent_chat(
 
     elif intent == "consultation":
         response, rag_refs = await generate_consultation_response(
-            messages, language, category, user_turn_count, cta_level
+            messages, language, category, user_turn_count, cta_level,
+            pre_extracted_keywords=pre_keywords,
         )
         return {
             "response": response,
@@ -232,7 +238,8 @@ async def run_multi_agent_chat(
 
     elif intent == "medical":
         response, rag_refs = await generate_medical_response(
-            messages, language, category, cta_level
+            messages, language, category, cta_level,
+            pre_extracted_keywords=pre_keywords,
         )
         return {
             "response": response,
@@ -246,4 +253,124 @@ async def run_multi_agent_chat(
         "response": response,
         "rag_references": [],
         "agent_type": "general",
+    }
+
+
+# ============================================
+# 대화형 이메일 동의 헬퍼
+# ============================================
+
+async def _check_email_consent(
+    messages: list[dict],
+    session_id: str,
+    language: str,
+) -> dict | None:
+    """동의 대기 상태면 사용자 응답을 처리. 아니면 None 반환."""
+    db = get_supabase()
+
+    try:
+        session_result = (
+            db.table("chat_sessions")
+            .select("pending_email, email_consent_status")
+            .eq("id", session_id)
+            .single()
+            .execute()
+        )
+    except Exception:
+        return None
+
+    if not session_result.data:
+        return None
+
+    consent_status = session_result.data.get("email_consent_status")
+    if consent_status != "pending":
+        return None
+
+    pending_email = session_result.data.get("pending_email")
+    if not pending_email:
+        return None
+
+    # 최신 사용자 메시지
+    latest_msg = ""
+    for m in reversed(messages):
+        if m["role"] == "user":
+            latest_msg = m["content"]
+            break
+
+    if not latest_msg:
+        return None
+
+    # 동의 여부 판별
+    if CONSENT_YES_PATTERN.search(latest_msg):
+        # 동의 → 이메일 확정 저장
+        db.table("chat_sessions").update({
+            "customer_email": pending_email,
+            "email_consent_status": "agreed",
+        }).eq("id", session_id).execute()
+
+        if language == "ja":
+            response = (
+                f"ご同意ありがとうございます！{pending_email} 宛に、3日以内にリポートをお届けいたします。\n\n"
+                "引き続き、ご質問がございましたらお気軽にどうぞ。"
+            )
+        else:
+            response = (
+                f"동의해 주셔서 감사합니다! {pending_email}으로 3일 이내에 리포트를 보내드리겠습니다.\n\n"
+                "계속 궁금한 점이 있으시면 편하게 말씀해 주세요."
+            )
+
+        logger.info(f"[Router] Email consent agreed: {pending_email} (session {session_id[:8]})")
+        return {"response": response, "rag_references": [], "agent_type": "consultation"}
+
+    elif CONSENT_NO_PATTERN.search(latest_msg):
+        # 거절 → 상태 초기화
+        db.table("chat_sessions").update({
+            "pending_email": None,
+            "email_consent_status": "declined",
+        }).eq("id", session_id).execute()
+
+        if language == "ja":
+            response = "承知いたしました。引き続きご質問がございましたらお気軽にどうぞ。"
+        else:
+            response = "알겠습니다. 계속 궁금한 점이 있으시면 편하게 말씀해 주세요."
+
+        logger.info(f"[Router] Email consent declined (session {session_id[:8]})")
+        return {"response": response, "rag_references": [], "agent_type": "consultation"}
+
+    # 동의/거절이 아닌 다른 메시지 → 일반 라우팅으로 진행 (동의 상태 유지)
+    return None
+
+
+async def _handle_email_detected(
+    email: str,
+    session_id: str,
+    language: str,
+) -> dict:
+    """이메일 감지 시 DB에 pending 저장 + 대화형 동의 질문 반환."""
+    db = get_supabase()
+
+    db.table("chat_sessions").update({
+        "pending_email": email,
+        "email_consent_status": "pending",
+    }).eq("id", session_id).execute()
+
+    if language == "ja":
+        response = (
+            f"ありがとうございます。{email} 宛にご相談内容をまとめた分析リポートをお届けいたします。\n\n"
+            "リポート送付のため、メールアドレスの収集・利用についてご同意いただけますか？"
+            "「はい」とお答えいただければ、3日以内にリポートをお届けいたします。"
+        )
+    else:
+        response = (
+            f"감사합니다. {email}으로 상담 내용을 정리한 분석 리포트를 보내드리겠습니다.\n\n"
+            "리포트 발송을 위해 이메일 주소 수집 및 이용에 동의하시겠습니까? "
+            "\"네\"라고 답해주시면 3일 이내에 리포트를 보내드리겠습니다."
+        )
+
+    logger.info(f"[Router] Email detected: {email}, consent pending (session {session_id[:8]})")
+
+    return {
+        "response": response,
+        "rag_references": [],
+        "agent_type": "consultation",
     }
