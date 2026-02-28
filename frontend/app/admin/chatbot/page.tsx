@@ -33,6 +33,8 @@ export default function ChatbotAdmin() {
   const [transferName, setTransferName] = useState("익명");
   const [transferEmail, setTransferEmail] = useState("");
   const [transferring, setTransferring] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   function loadData() {
     setLoading(true);
@@ -64,6 +66,37 @@ export default function ChatbotAdmin() {
       alert("이전에 실패했습니다.");
     } finally {
       setTransferring(false);
+    }
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    if (selectedIds.size === sessions.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(sessions.map((s) => s.id)));
+    }
+  }
+
+  async function handleDelete() {
+    if (selectedIds.size === 0 || deleting) return;
+    if (!confirm(`선택한 ${selectedIds.size}건의 세션을 삭제하시겠습니까?`)) return;
+    setDeleting(true);
+    try {
+      await chatAdminAPI.deleteSessions(Array.from(selectedIds));
+      setSelectedIds(new Set());
+      loadData();
+    } catch {
+      alert("삭제에 실패했습니다.");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -149,7 +182,17 @@ export default function ChatbotAdmin() {
                 <h3 className="text-lg font-bold text-slate-800">
                   채팅 세션 목록
                 </h3>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  {selectedIds.size > 0 && (
+                    <button
+                      onClick={handleDelete}
+                      disabled={deleting}
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-red-600 border border-red-200 rounded-lg hover:bg-red-50 disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-sm">delete</span>
+                      선택 삭제 ({selectedIds.size})
+                    </button>
+                  )}
                   <select
                     value={filter}
                     onChange={(e) => {
@@ -169,6 +212,14 @@ export default function ChatbotAdmin() {
                 <table className="w-full text-left">
                   <thead className="bg-slate-50 text-slate-500 text-xs font-semibold uppercase tracking-wider">
                     <tr>
+                      <th className="px-3 py-3 border-b w-10">
+                        <input
+                          type="checkbox"
+                          checked={sessions.length > 0 && selectedIds.size === sessions.length}
+                          onChange={toggleAll}
+                          className="rounded border-slate-300"
+                        />
+                      </th>
                       <th className="px-6 py-3 border-b">방문자 ID</th>
                       <th className="px-6 py-3 border-b">언어</th>
                       <th className="px-6 py-3 border-b">메시지</th>
@@ -191,6 +242,14 @@ export default function ChatbotAdmin() {
                           key={s.id}
                           className="hover:bg-slate-50 transition-colors"
                         >
+                          <td className="px-3 py-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(s.id)}
+                              onChange={() => toggleSelect(s.id)}
+                              className="rounded border-slate-300"
+                            />
+                          </td>
                           <td className="px-6 py-4 font-mono text-xs text-slate-700">
                             {s.visitor_id}
                           </td>
@@ -271,7 +330,7 @@ export default function ChatbotAdmin() {
                     {sessions.length === 0 && (
                       <tr>
                         <td
-                          colSpan={9}
+                          colSpan={10}
                           className="px-6 py-12 text-center text-slate-400"
                         >
                           채팅 세션이 없습니다

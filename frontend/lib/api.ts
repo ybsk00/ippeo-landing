@@ -325,10 +325,10 @@ export const reportAPI = {
     fetchAPI<{ report_data_ko: ReportData; cached: boolean }>(
       `/reports/${id}/translate`
     ),
-  sendEmail: (id: string) =>
+  sendEmail: (id: string, language: string = "ja") =>
     fetchAPI<{ id: string; status: string; email_sent_to: string; access_token: string }>(
       `/reports/${id}/send-email`,
-      { method: "POST" }
+      { method: "POST", body: JSON.stringify({ language }) }
     ),
   bulkApprove: (ids: string[]) =>
     fetchAPI<{ approved: number; approved_ids: string[]; skipped: { id: string; reason: string }[] }>(
@@ -518,6 +518,14 @@ export const chatAdminAPI = {
       {
         method: "POST",
         body: JSON.stringify({ customer_name: customerName, customer_email: customerEmail }),
+      }
+    ),
+  deleteSessions: (ids: string[]) =>
+    fetchAPI<{ deleted: number }>(
+      "/chat/admin/sessions/delete",
+      {
+        method: "POST",
+        body: JSON.stringify({ session_ids: ids }),
       }
     ),
 };

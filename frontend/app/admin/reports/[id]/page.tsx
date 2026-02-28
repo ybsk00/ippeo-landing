@@ -86,12 +86,12 @@ export default function ReportDetailPage({
     }
   };
 
-  const handleSendEmail = async () => {
+  const handleSendEmail = async (language: string = "ja") => {
     if (!report) return;
     try {
-      const result = await reportAPI.sendEmail(report.id);
+      const result = await reportAPI.sendEmail(report.id, language);
       setReport({ ...report, status: "sent" });
-      alert(`이메일 발송 완료: ${result.email_sent_to}`);
+      alert(`이메일 발송 완료: ${result.email_sent_to} (${language === "ko" ? "한국어" : "日本語"})`);
     } catch (err) {
       alert(`발송 실패: ${err instanceof Error ? err.message : "알 수 없는 오류"}`);
     }
@@ -294,13 +294,20 @@ export default function ReportDetailPage({
                   <span className="text-sm font-semibold">승인 완료</span>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-wrap">
                   <button
-                    onClick={handleSendEmail}
+                    onClick={() => handleSendEmail("ja")}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                   >
                     <span className="material-symbols-outlined text-lg">email</span>
-                    이메일 발송
+                    日本語 발송
+                  </button>
+                  <button
+                    onClick={() => handleSendEmail("ko")}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-lg">email</span>
+                    한국어 발송
                   </button>
 
                   <div className="relative inline-block">

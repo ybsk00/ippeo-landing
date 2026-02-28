@@ -151,9 +151,13 @@ async def approve_report(report_id: str):
     }
 
 
+class SendEmailRequest(BaseModel):
+    language: str = "ja"
+
+
 @router.post("/{report_id}/send-email")
-async def send_email(report_id: str):
-    """승인된 리포트에 대해 이메일 발송"""
+async def send_email(report_id: str, data: SendEmailRequest = SendEmailRequest()):
+    """승인된 리포트에 대해 이메일 발송 (language: ja 또는 ko)"""
     db = get_supabase()
 
     report = (
@@ -182,6 +186,7 @@ async def send_email(report_id: str):
             to_email=to_email,
             customer_name=consultation["customer_name"],
             access_token=access_token,
+            language=data.language,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"이메일 발송 실패: {str(e)}")

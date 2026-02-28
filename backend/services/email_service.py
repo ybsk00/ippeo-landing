@@ -67,15 +67,65 @@ def _build_r4_html(customer_name: str, report_url: str) -> str:
 #     ...
 
 
+def _build_r4_html_ko(customer_name: str, report_url: str) -> str:
+    """R4 고객용 한국어 이메일"""
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body {{ font-family: 'Noto Sans KR', sans-serif; background: #F3E6DF; margin: 0; padding: 0; }}
+            .container {{ max-width: 480px; margin: 40px auto; background: white; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; }}
+            .header {{ background: linear-gradient(135deg, #C97FAF 0%, #B06A99 100%); padding: 32px 24px; text-align: center; color: white; }}
+            .header h1 {{ font-size: 18px; margin: 0 0 4px 0; }}
+            .header p {{ font-size: 12px; margin: 0; opacity: 0.9; }}
+            .body {{ padding: 32px 24px; }}
+            .body p {{ font-size: 14px; color: #3A2630; line-height: 1.8; margin: 0 0 16px 0; }}
+            .cta {{ display: block; background: #C97FAF; color: white; text-decoration: none; padding: 14px 24px; border-radius: 8px; text-align: center; font-size: 14px; font-weight: bold; margin: 24px 0; }}
+            .footer {{ padding: 20px 24px; border-top: 1px solid #f0f0f0; text-align: center; }}
+            .footer p {{ font-size: 11px; color: #999; margin: 4px 0; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>ARUMI | 온라인 상담 리포트</h1>
+                <p>한국미용의료 컨설팅</p>
+            </div>
+            <div class="body">
+                <p>{customer_name}님</p>
+                <p>상담에 참여해 주셔서 진심으로 감사드립니다.</p>
+                <p>상담 내용을 바탕으로 전문 상담원이 정리한 리포트를 보내드립니다.</p>
+                <a href="{report_url}" class="cta">리포트 확인하기 &rarr;</a>
+                <p style="font-size: 12px; color: #999;">
+                    ※ 본 리포트의 유효기간은 30일입니다.
+                </p>
+            </div>
+            <div class="footer">
+                <p>ARUMI | 한국미용의료 컨설팅</p>
+                <p>본 메일에 대해 문의사항이 있으시면 회신해 주세요.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+
 async def send_report_email(
     to_email: str,
     customer_name: str,
     access_token: str,
+    language: str = "ja",
 ) -> dict:
     report_url = f"{FRONTEND_URL}/report/{access_token}"
 
-    subject = f"【ARUMI】{customer_name}様 ご相談リポートが届きました"
-    html_content = _build_r4_html(customer_name, report_url)
+    if language == "ko":
+        subject = f"【ARUMI】{customer_name}님 상담 리포트가 도착했습니다"
+        html_content = _build_r4_html_ko(customer_name, report_url)
+    else:
+        subject = f"【ARUMI】{customer_name}様 ご相談リポートが届きました"
+        html_content = _build_r4_html(customer_name, report_url)
 
     msg = MIMEMultipart("alternative")
     msg["From"] = f"ARUMI <{GMAIL_ADDRESS}>"

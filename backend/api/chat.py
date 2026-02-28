@@ -161,6 +161,15 @@ async def send_message(data: ChatMessageRequest):
         response_text = result["response"]
         rag_references = result["rag_references"]
         agent_type = result["agent_type"]
+        # CTA 레벨을 chat_sessions에 저장
+        cta_level = result.get("cta_level")
+        if cta_level:
+            try:
+                db.table("chat_sessions").update(
+                    {"cta_level": cta_level}
+                ).eq("id", data.session_id).execute()
+            except Exception:
+                pass  # CTA 저장 실패는 무시
     except Exception as e:
         logger.error(f"[Chat] Multi-agent failed: {e}", exc_info=True)
         # 폴백 응답
@@ -603,6 +612,25 @@ async def admin_session_detail(session_id: str):
         "consultation": consultation,
         "report": report,
     }
+
+
+# POST /api/chat/admin/sessions/delete — 세션 일괄 삭제
+class DeleteSessionsRequest(BaseModel):
+    session_ids: list[str]
+
+
+@router.post("/admin/sessions/delete")
+async def admin_delete_sessions(data: DeleteSessionsRequest):
+    """챗봇 세션 일괄 삭제 (chat_messages는 ON DELETE CASCADE)"""
+    db = get_supabase()
+    deleted = 0
+    for sid in data.session_ids:
+        try:
+            db.table("chat_sessions").delete().eq("id", sid).execute()
+            deleted += 1
+        except Exception as e:
+            logger.warning(f"[Admin] Failed to delete session {sid}: {e}")
+    return {"deleted": deleted}
 
 
 # POST /api/chat/admin/sessions/{session_id}/transfer — 상담관리로 이전

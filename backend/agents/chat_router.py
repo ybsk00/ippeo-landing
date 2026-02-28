@@ -217,12 +217,14 @@ async def run_multi_agent_chat(
                 "response": response,
                 "rag_references": [],
                 "agent_type": "general",
+                "cta_level": cta_level,
             }
         greeting = get_greeting(language)
         return {
             "response": greeting,
             "rag_references": [],
             "agent_type": "greeting",
+            "cta_level": cta_level,
         }
 
     elif intent == "general":
@@ -231,6 +233,7 @@ async def run_multi_agent_chat(
             "response": response,
             "rag_references": [],
             "agent_type": "general",
+            "cta_level": cta_level,
         }
 
     elif intent == "consultation":
@@ -242,6 +245,7 @@ async def run_multi_agent_chat(
             "response": response,
             "rag_references": rag_refs,
             "agent_type": "consultation",
+            "cta_level": cta_level,
         }
 
     elif intent == "medical":
@@ -253,6 +257,7 @@ async def run_multi_agent_chat(
             "response": response,
             "rag_references": rag_refs,
             "agent_type": "medical",
+            "cta_level": cta_level,
         }
 
     # fallback
@@ -261,6 +266,7 @@ async def run_multi_agent_chat(
         "response": response,
         "rag_references": [],
         "agent_type": "general",
+        "cta_level": cta_level,
     }
 
 

@@ -482,6 +482,20 @@ async def _generate_all_reports(
         await _save_report(consultation_id, "r4", r4_report_data, rag_results, r4_review_count, max_retries)
         logger.info(f"[Pipeline:{consultation_id[:8]}] R4 complete")
 
+        # R4 한국어 번역 자동 실행
+        try:
+            from agents.korean_translator import translate_report_to_korean
+            start = time.time()
+            ko_data = await translate_report_to_korean(r4_report_data)
+            duration = int((time.time() - start) * 1000)
+            existing = db.table("reports").select("id").eq("consultation_id", consultation_id).eq("report_type", "r4").execute()
+            if existing.data:
+                db.table("reports").update({"report_data_ko": ko_data}).eq("id", existing.data[0]["id"]).execute()
+            logger.info(f"[Pipeline:{consultation_id[:8]}] R4 Korean translation saved ({duration}ms)")
+            await _log_agent(consultation_id, "r4_korean_translator", None, {"sections": len(ko_data) if isinstance(ko_data, dict) else 0}, duration, "success")
+        except Exception as e:
+            logger.warning(f"[Pipeline:{consultation_id[:8]}] Korean translation failed: {e}")
+
     except Exception as e:
         logger.error(f"[Pipeline:{consultation_id[:8]}] R4 failed: {str(e)}", exc_info=True)
         await _log_agent(consultation_id, "r4_writer", None, None, 0, "failed", str(e))
