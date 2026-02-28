@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 # ============================================
 
 ROUTE_PROMPT_JA = """あなたはユーザーメッセージの意図を分類する専門家です。
-以下の会話履歴とユーザーの最新メッセージを分析し、意図を判定してください。
+以下の会話履歴とユーザーの最新メッセージを分析し、意図とCTAレベルを判定してください。
 
-【分類カテゴリ】
+【分類カテゴリ: intent】
 - "greeting": 挨拶、最初の会話開始（こんにちは、はじめまして等）
 - "general": 日常的な雑談、天気、旅行、食事など医療と無関係な質問
 - "consultation": 費用、価格、日程、予約、入院期間、回復期間、準備事項、スケジュールに関する質問
@@ -28,20 +28,25 @@ ROUTE_PROMPT_JA = """あなたはユーザーメッセージの意図を分類�
 - "dermatology": 皮膚科系（ニキビ、シミ、毛穴、レーザー、HIFU、ウルセラ、リジュラン等）
 - "plastic_surgery": 整形外科系（二重、鼻整形、脂肪吸引、輪郭、リフティング等）
 
+【CTA判定: cta_level】会話全体の文脈でユーザーの購買意欲を判定：
+- "hot": 具体的な日程・費用質問、予約希望、「いつ行けますか」「申し込みたい」等の積極的な発話
+- "warm": 関心はあるが比較中・検討中。「もう少し調べたい」「他の方法は？」等
+- "cool": 情報探索段階。「ちょっと気になって」「まだ具体的には」等
+- 会話履歴全体を考慮して判定（最新メッセージだけでなく、過去の発話も含む）
+
 【判定のポイント】
 - 「いくら」「費用」「値段」「期間」「予約」→ consultation
 - 「方法」「副作用」「効果」「リスク」「比較」→ medical
 - 曖昧な場合は会話履歴の文脈で判断
-- メールアドレスが含まれている場合 → "email_provided"と追加フラグ
 
 JSON形式で返してください：
-{"intent": "medical", "category": "plastic_surgery"}
+{"intent": "medical", "category": "plastic_surgery", "cta_level": "hot"}
 """
 
 ROUTE_PROMPT_KO = """당신은 사용자 메시지의 의도를 분류하는 전문가입니다.
-아래 대화 이력과 사용자의 최신 메시지를 분석하여 의도를 판정해주세요.
+아래 대화 이력과 사용자의 최신 메시지를 분석하여 의도와 CTA 레벨을 판정해주세요.
 
-【분류 카테고리】
+【분류 카테고리: intent】
 - "greeting": 인사, 첫 대화 시작 (안녕하세요, 처음 뵙겠습니다 등)
 - "general": 일상적인 잡담, 날씨, 여행, 음식 등 의료와 무관한 질문
 - "consultation": 비용, 가격, 일정, 예약, 입원기간, 회복기간, 준비사항, 스케줄 관련 질문
@@ -52,14 +57,19 @@ ROUTE_PROMPT_KO = """당신은 사용자 메시지의 의도를 분류하는 전
 - "dermatology": 피부과 계열 (여드름, 기미, 모공, 레이저, 하이푸, 울쎄라, 리쥬란 등)
 - "plastic_surgery": 성형외과 계열 (쌍꺼풀, 코 성형, 지방흡입, 윤곽, 리프팅 등)
 
+【CTA 판정: cta_level】대화 전체 맥락으로 사용자의 구매 의향을 판정:
+- "hot": 구체적 일정/비용 질문, 예약 희망, "언제 갈 수 있나요", "신청하고 싶어요" 등 적극적 발화
+- "warm": 관심은 있지만 비교/검토 중. "좀 더 알아보고 싶어요", "다른 방법은?" 등
+- "cool": 정보 탐색 단계. "좀 궁금해서", "아직 구체적으로는" 등
+- 대화 이력 전체를 고려하여 판정 (최신 메시지뿐 아니라 과거 발화도 포함)
+
 【판정 포인트】
 - "얼마", "비용", "가격", "기간", "예약" → consultation
 - "방법", "부작용", "효과", "리스크", "비교" → medical
 - 모호한 경우 대화 이력의 맥락으로 판단
-- 이메일 주소가 포함된 경우 → "email_provided" 추가 플래그
 
 JSON 형식으로 반환:
-{"intent": "medical", "category": "plastic_surgery"}
+{"intent": "medical", "category": "plastic_surgery", "cta_level": "hot"}
 """
 
 # 이메일 정규식
@@ -120,18 +130,23 @@ async def route_message(
         if category not in ("dermatology", "plastic_surgery"):
             category = "plastic_surgery"
 
+        cta_level = data.get("cta_level", "cool")
+        if cta_level not in ("hot", "warm", "cool"):
+            cta_level = "cool"
+
         result = {
             "intent": intent,
             "category": category if intent in ("consultation", "medical") else None,
             "email": detected_email,
+            "cta_level": cta_level,
         }
 
-        logger.info(f"[Router] intent={intent}, category={category}, email={detected_email}")
+        logger.info(f"[Router] intent={intent}, category={category}, cta={cta_level}, email={detected_email}")
         return result
 
     except Exception as e:
         logger.warning(f"[Router] Classification failed: {e}, defaulting to general")
-        return {"intent": "general", "category": None, "email": detected_email}
+        return {"intent": "general", "category": None, "email": detected_email, "cta_level": "cool"}
 
 
 async def run_multi_agent_chat(
@@ -156,6 +171,7 @@ async def run_multi_agent_chat(
     intent = route_result["intent"]
     category = route_result["category"] or "plastic_surgery"
     detected_email = route_result["email"]
+    cta_level = route_result.get("cta_level", "cool")
 
     # 2. 이메일 감지 시 → 동의 요청 (바로 저장하지 않음)
     if detected_email:
@@ -206,7 +222,7 @@ async def run_multi_agent_chat(
 
     elif intent == "consultation":
         response, rag_refs = await generate_consultation_response(
-            messages, language, category, user_turn_count
+            messages, language, category, user_turn_count, cta_level
         )
         return {
             "response": response,
@@ -216,7 +232,7 @@ async def run_multi_agent_chat(
 
     elif intent == "medical":
         response, rag_refs = await generate_medical_response(
-            messages, language, category
+            messages, language, category, cta_level
         )
         return {
             "response": response,

@@ -92,6 +92,7 @@ async def generate_medical_response(
     messages: list[dict],
     language: str = "ja",
     category: str = "plastic_surgery",
+    cta_level: str = "cool",
 ) -> tuple[str, list[dict]]:
     """치료전문 에이전트 응답 생성. Returns: (response_text, rag_references)"""
     system_prompt = SYSTEM_PROMPT_JA if language == "ja" else SYSTEM_PROMPT_KO
@@ -132,7 +133,25 @@ async def generate_medical_response(
         history_lines.append(f"{label}: {m['content']}")
     history_text = "\n".join(history_lines)
 
-    # 4. 프롬프트 구성
+    # 4. CTA 기반 리포트 안내 힌트
+    report_hint = ""
+    if cta_level == "hot":
+        if language == "ja":
+            report_hint = (
+                "\n\n【★リポート案内★】このお客様は施術への関心が非常に高いです。"
+                "回答の中で自然に「ここまでのご相談内容をまとめた詳しい分析リポートを"
+                "メールでお送りできます。ご希望でしたらメールアドレスをお知らせください」"
+                "と案内してください。ただし、すでに案内済みなら繰り返さないこと。"
+            )
+        else:
+            report_hint = (
+                "\n\n【★리포트 안내★】이 고객은 시술에 대한 관심이 매우 높습니다. "
+                "답변 중에 자연스럽게 \"지금까지 상담 내용을 정리한 상세 분석 리포트를 "
+                "이메일로 보내드릴 수 있습니다. 원하시면 이메일 주소를 알려주세요\"라고 "
+                "안내해주세요. 단, 이미 안내했다면 반복하지 마세요."
+            )
+
+    # 5. 프롬프트 구성
     if language == "ja":
         prompt = f"""以下の参考資料と会話履歴をもとに、美容医療専門コンサルタントとして回答してください。
 施術の方法・効果・副作用など医学的な内容を中心に回答します。
@@ -141,7 +160,7 @@ async def generate_medical_response(
 {rag_context if rag_context else "（該当する参考資料なし — ご来院時に担当医からご説明と伝えてください）"}
 
 【会話履歴】
-{history_text}
+{history_text}{report_hint}
 
 上記の会話に対して、専門コンサルタントとして自然に返答してください。
 参考資料に関連する情報がある場合はそれを活用してください。
@@ -154,7 +173,7 @@ async def generate_medical_response(
 {rag_context if rag_context else "(해당 참고자료 없음 — 내원 시 담당 의사에게 상담받으실 수 있다고 전해주세요)"}
 
 【대화 이력】
-{history_text}
+{history_text}{report_hint}
 
 위 대화에 대해 전문 상담원으로서 자연스럽게 답변해주세요.
 참고자료에 관련 정보가 있으면 활용해주세요.

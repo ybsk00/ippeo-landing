@@ -99,6 +99,7 @@ async def generate_consultation_response(
     language: str = "ja",
     category: str = "plastic_surgery",
     user_turn_count: int = 0,
+    cta_level: str = "cool",
 ) -> tuple[str, list[dict]]:
     """상담실장 에이전트 응답 생성. Returns: (response_text, rag_references)"""
     system_prompt = SYSTEM_PROMPT_JA if language == "ja" else SYSTEM_PROMPT_KO
@@ -139,13 +140,24 @@ async def generate_consultation_response(
         history_lines.append(f"{label}: {m['content']}")
     history_text = "\n".join(history_lines)
 
-    # 4. 리포트 안내 힌트 (5턴 이상)
+    # 4. 리포트 안내 힌트 (CTA Hot이거나 5턴 이상)
     report_hint = ""
-    if user_turn_count >= 5:
+    should_hint_report = cta_level == "hot" or user_turn_count >= 5
+    if should_hint_report:
         if language == "ja":
-            report_hint = "\n\n【ヒント】会話が十分に深まっています。まだリポート案内をしていなければ、自然なタイミングでリポートのメール送付を案内してください。"
+            report_hint = (
+                "\n\n【★リポート案内★】このお客様は施術への関心が高いです。"
+                "回答の中で自然に「ご相談内容をまとめた詳しい分析リポートをメールでお送りできます。"
+                "ご希望でしたらメールアドレスをお知らせください」と案内してください。"
+                "ただし、すでに案内済みなら繰り返さないこと。"
+            )
         else:
-            report_hint = "\n\n【힌트】대화가 충분히 깊어졌습니다. 아직 리포트 안내를 하지 않았다면, 자연스러운 타이밍에 리포트 이메일 발송을 안내해주세요."
+            report_hint = (
+                "\n\n【★리포트 안내★】이 고객은 시술에 대한 관심이 높습니다. "
+                "답변 중에 자연스럽게 \"상담 내용을 정리한 상세 분석 리포트를 이메일로 보내드릴 수 있습니다. "
+                "원하시면 이메일 주소를 알려주세요\"라고 안내해주세요. "
+                "단, 이미 안내했다면 반복하지 마세요."
+            )
 
     # 5. 프롬프트 구성
     if language == "ja":
