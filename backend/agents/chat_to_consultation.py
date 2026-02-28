@@ -93,7 +93,7 @@ async def convert_chat_to_consultation(
     # 5. chat_sessions 업데이트
     db.table("chat_sessions").update({
         "consultation_id": consultation_id,
-        "status": "ended",
+        "status": "completed",
     }).eq("id", session_id).execute()
 
     logger.info(

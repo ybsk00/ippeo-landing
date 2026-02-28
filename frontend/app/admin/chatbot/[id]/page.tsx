@@ -12,7 +12,7 @@ export default function ChatbotSessionDetail() {
 
   const [data, setData] = useState<ChatSessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [transferName, setTransferName] = useState("");
+  const [transferName, setTransferName] = useState("익명");
   const [transferEmail, setTransferEmail] = useState("");
   const [transferring, setTransferring] = useState(false);
   const [transferResult, setTransferResult] = useState<{

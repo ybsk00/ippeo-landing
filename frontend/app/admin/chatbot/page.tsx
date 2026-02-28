@@ -30,7 +30,7 @@ export default function ChatbotAdmin() {
   const [filter, setFilter] = useState<string>("");
   // 이전 모달 상태
   const [transferModal, setTransferModal] = useState<ChatSession | null>(null);
-  const [transferName, setTransferName] = useState("");
+  const [transferName, setTransferName] = useState("익명");
   const [transferEmail, setTransferEmail] = useState("");
   const [transferring, setTransferring] = useState(false);
 
