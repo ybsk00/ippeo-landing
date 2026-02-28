@@ -71,12 +71,16 @@ async def convert_chat_to_consultation(
     # 세션 언어 사용 (폴백: 파라미터)
     session_lang = session.get("language") or language
 
+    # 이름/이메일: 파라미터 → 세션 저장값 → 기본값 순으로 폴백
+    final_name = customer_name or session.get("customer_name") or "익명"
+    final_email = customer_email or session.get("customer_email") or ""
+
     # 4. consultation 삽입
     consultation_result = (
         db.table("consultations")
         .insert({
-            "customer_name": customer_name or session.get("visitor_id", ""),
-            "customer_email": customer_email or "",
+            "customer_name": final_name,
+            "customer_email": final_email,
             "original_text": original_text,
             "input_language": session_lang,
             "status": "registered",
