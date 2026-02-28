@@ -53,9 +53,7 @@ async def _retry_generate(model, prompt: str, max_retries: int = 3):
 
 async def generate_text(prompt: str, system_instruction: str = "") -> str:
     kwargs: dict = {
-        "generation_config": genai.GenerationConfig(
-            thinking_config=genai.types.ThinkingConfig(thinking_budget=0),
-        ),
+        "generation_config": {"thinking_config": {"thinking_budget": 0}},
     }
     if system_instruction:
         kwargs["system_instruction"] = system_instruction
@@ -130,7 +128,6 @@ async def generate_json(prompt: str, system_instruction: str = "", max_retries: 
     model_kwargs: dict = {
         "generation_config": genai.GenerationConfig(
             response_mime_type="application/json",
-            thinking_config=genai.types.ThinkingConfig(thinking_budget=0),
         ),
     }
     if system_instruction:
