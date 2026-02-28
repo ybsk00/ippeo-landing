@@ -5,17 +5,12 @@ import { useSearchParams } from "next/navigation";
 import ChatMessage from "@/components/chat/ChatMessage";
 import ChatInput from "@/components/chat/ChatInput";
 import TypingIndicator from "@/components/chat/TypingIndicator";
-import ReportPrompt from "@/components/chat/ReportPrompt";
 import {
   startSession,
   sendMessage,
-  requestReport,
-  checkReportStatus,
   type ChatMessage as ChatMessageType,
   type Language,
 } from "@/lib/chatApi";
-
-const MIN_TURNS_FOR_REPORT = 5;
 
 export default function ChatClient() {
   const searchParams = useSearchParams();
@@ -25,14 +20,9 @@ export default function ChatClient() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [isTyping, setIsTyping] = useState(false);
-  const [canGenerateReport, setCanGenerateReport] = useState(false);
-  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
-  const [reportToken, setReportToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const reportPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const userTurnCount = useRef(0);
 
   const t = lang === "ko" ? LABELS_KO : LABELS_JA;
 
@@ -78,13 +68,6 @@ export default function ChatClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lang]);
 
-  // ---- Cleanup polling on unmount ----
-  useEffect(() => {
-    return () => {
-      if (reportPollRef.current) clearInterval(reportPollRef.current);
-    };
-  }, []);
-
   // ---- Send message ----
   async function handleSend(content: string) {
     if (!sessionId || isTyping) return;
@@ -96,7 +79,6 @@ export default function ChatClient() {
       timestamp: new Date().toISOString(),
     };
     setMessages((prev) => [...prev, userMsg]);
-    userTurnCount.current += 1;
     setIsTyping(true);
     setError(null);
 
@@ -112,14 +94,6 @@ export default function ChatClient() {
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, aiMsg]);
-
-      // Check if report generation is possible
-      if (
-        res.can_generate_report ||
-        userTurnCount.current >= MIN_TURNS_FOR_REPORT
-      ) {
-        setCanGenerateReport(true);
-      }
     } catch (err) {
       console.error("Send message failed:", err);
       const errorMsg: ChatMessageType = {
@@ -131,49 +105,6 @@ export default function ChatClient() {
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsTyping(false);
-    }
-  }
-
-  // ---- Request report ----
-  async function handleReportRequest(name: string, email: string) {
-    if (!sessionId || isGeneratingReport) return;
-
-    setIsGeneratingReport(true);
-    setError(null);
-
-    try {
-      await requestReport(sessionId, {
-        customer_name: name,
-        customer_email: email,
-      });
-
-      // Poll for report status
-      reportPollRef.current = setInterval(async () => {
-        try {
-          const status = await checkReportStatus(sessionId);
-          if (status.status === "ready" && status.access_token) {
-            setReportToken(status.access_token);
-            setIsGeneratingReport(false);
-            if (reportPollRef.current) {
-              clearInterval(reportPollRef.current);
-              reportPollRef.current = null;
-            }
-          } else if (status.status === "failed") {
-            setIsGeneratingReport(false);
-            setError(t.errorReport);
-            if (reportPollRef.current) {
-              clearInterval(reportPollRef.current);
-              reportPollRef.current = null;
-            }
-          }
-        } catch {
-          // Silently retry on polling error
-        }
-      }, 5000);
-    } catch (err) {
-      console.error("Report request failed:", err);
-      setIsGeneratingReport(false);
-      setError(err instanceof Error ? err.message : t.errorReport);
     }
   }
 
@@ -241,26 +172,6 @@ export default function ChatClient() {
 
         {isTyping && <TypingIndicator language={lang} />}
 
-        {/* Report Prompt */}
-        {canGenerateReport && !reportToken && (
-          <ReportPrompt
-            language={lang}
-            onRequest={handleReportRequest}
-            isGenerating={isGeneratingReport}
-            reportToken={reportToken}
-          />
-        )}
-
-        {/* Report Ready */}
-        {reportToken && (
-          <ReportPrompt
-            language={lang}
-            onRequest={handleReportRequest}
-            isGenerating={false}
-            reportToken={reportToken}
-          />
-        )}
-
         {/* Inline error banner */}
         {error && sessionId && (
           <div className="mb-4">
@@ -296,8 +207,6 @@ const LABELS_JA = {
   errorInit:
     "チャットセッションを開始できませんでした。しばらくしてから再度お試しください。",
   errorSend: "メッセージの送信に失敗しました。もう一度お試しください。",
-  errorReport:
-    "リポートの作成に失敗しました。もう一度お試しください。",
   retry: "再試行",
   headerTitle: "カウンセリング",
   headerSub: "韓国美容医療の専門相談",
@@ -309,8 +218,6 @@ const LABELS_KO = {
   errorInit:
     "채팅 세션을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.",
   errorSend: "메시지 전송에 실패했습니다. 다시 시도해 주세요.",
-  errorReport:
-    "리포트 생성에 실패했습니다. 다시 시도해 주세요.",
   retry: "재시도",
   headerTitle: "상담",
   headerSub: "한국 미용의료 전문 상담",

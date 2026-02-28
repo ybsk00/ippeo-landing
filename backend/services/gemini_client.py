@@ -52,12 +52,14 @@ async def _retry_generate(model, prompt: str, max_retries: int = 3):
 
 
 async def generate_text(prompt: str, system_instruction: str = "") -> str:
-    model = get_model()
+    kwargs: dict = {
+        "generation_config": genai.GenerationConfig(
+            thinking_config=genai.types.ThinkingConfig(thinking_budget=0),
+        ),
+    }
     if system_instruction:
-        model = genai.GenerativeModel(
-            "gemini-2.5-flash",
-            system_instruction=system_instruction,
-        )
+        kwargs["system_instruction"] = system_instruction
+    model = genai.GenerativeModel("gemini-2.5-flash", **kwargs)
     response = await _retry_generate(model, prompt)
     return response.text
 
@@ -128,6 +130,7 @@ async def generate_json(prompt: str, system_instruction: str = "", max_retries: 
     model_kwargs: dict = {
         "generation_config": genai.GenerationConfig(
             response_mime_type="application/json",
+            thinking_config=genai.types.ThinkingConfig(thinking_budget=0),
         ),
     }
     if system_instruction:
