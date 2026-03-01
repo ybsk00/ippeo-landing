@@ -20,11 +20,22 @@ export default function ChatClient() {
   const lang = (searchParams.get("lang") as Language) || "ja";
 
   // ---- State ----
+  const localGreeting = lang === "ko"
+    ? "안녕하세요! ARUMI의 미용 의료 전문 상담사입니다.\n\n상담 내용을 바탕으로 맞춤 분석 리포트를 작성하여 메일로 보내드립니다.\n치료와 시술에 대해 무엇이든 편하게 물어보세요!"
+    : "こんにちは！ARUMIの美容医療コンサルタントです。\n\nご相談内容をもとに、あなただけの分析リポートを作成し、メールでお届けいたします。\n治療や施術について、どんなことでもお気軽にご質問ください！";
+
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<ChatMessageType[]>([]);
+  const [messages, setMessages] = useState<ChatMessageType[]>([
+    {
+      id: "greeting",
+      role: "assistant",
+      content: localGreeting,
+      timestamp: new Date().toISOString(),
+    },
+  ]);
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [isInitializing, setIsInitializing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const t = lang === "ko" ? LABELS_KO : LABELS_JA;
@@ -38,7 +49,7 @@ export default function ChatClient() {
     scrollToBottom();
   }, [messages, isTyping, scrollToBottom]);
 
-  // ---- Initialize session ----
+  // ---- 세션을 백그라운드로 생성 (UI는 즉시 표시) ----
   useEffect(() => {
     let cancelled = false;
 
@@ -47,20 +58,10 @@ export default function ChatClient() {
         const res = await startSession(lang);
         if (cancelled) return;
         setSessionId(res.session_id);
-        setMessages([
-          {
-            id: "greeting",
-            role: "assistant",
-            content: res.greeting,
-            timestamp: new Date().toISOString(),
-          },
-        ]);
       } catch (err) {
         if (cancelled) return;
         console.error("Session start failed:", err);
         setError(t.errorInit);
-      } finally {
-        if (!cancelled) setIsInitializing(false);
       }
     }
 
