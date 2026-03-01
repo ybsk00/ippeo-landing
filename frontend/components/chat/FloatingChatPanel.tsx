@@ -93,9 +93,10 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
   const t = LABELS[lang];
   const language: Language = lang;
 
+  const sessionKey = `arumi_chat_session_id_${lang}`;
   const [sessionId, setSessionId] = useState<string | null>(() => {
     if (typeof window !== "undefined") {
-      return sessionStorage.getItem("arumi_chat_session_id");
+      return sessionStorage.getItem(sessionKey);
     }
     return null;
   });
@@ -143,7 +144,7 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
         const res = await startSession(language);
         if (cancelled) return;
         setSessionId(res.session_id);
-        sessionStorage.setItem("arumi_chat_session_id", res.session_id);
+        sessionStorage.setItem(sessionKey, res.session_id);
       } catch {
         if (cancelled) return;
         setError(t.errorInit);
