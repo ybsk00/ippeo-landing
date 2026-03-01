@@ -137,7 +137,7 @@ async def route_message(
 """
 
     try:
-        raw = await generate_json(prompt)
+        raw = await generate_json(prompt, model_name="gemini-2.5-flash-lite")
         data = json.loads(raw)
         if isinstance(data, list):
             data = data[0] if data else {}

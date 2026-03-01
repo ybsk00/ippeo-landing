@@ -2,14 +2,15 @@ interface Section3RecommendationProps {
   primary: { label: string; items: string[] };
   secondary: { label: string; items: string[] };
   goal: string;
+  lang?: "ja" | "ko";
 }
 
-export default function Section3Recommendation({ primary, secondary, goal }: Section3RecommendationProps) {
+export default function Section3Recommendation({ primary, secondary, goal, lang = "ja" }: Section3RecommendationProps) {
   return (
     <section>
       <h3 className="text-lg font-bold text-text-dark mb-4 flex items-center gap-2">
         <span className="block w-1 h-6 bg-coral rounded-full"></span>
-        ご提案 (Recommended Plan)
+        {lang === "ko" ? "제안 (Recommended Plan)" : "ご提案 (Recommended Plan)"}
       </h3>
       <div className="space-y-4">
         {/* 1차 권장 */}

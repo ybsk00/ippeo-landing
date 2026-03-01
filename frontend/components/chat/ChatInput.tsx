@@ -1,26 +1,36 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import type { Language } from "@/lib/chatApi";
+import type { Language, VoiceMessageResponse } from "@/lib/chatApi";
+import VoiceMicButton from "./VoiceMicButton";
 
 interface ChatInputProps {
   onSend: (content: string) => void;
   disabled: boolean;
   language: Language;
+  sessionId?: string | null;
+  onVoiceResult?: (result: VoiceMessageResponse) => void;
+  onVoiceError?: (error: string) => void;
 }
 
 export default function ChatInput({
   onSend,
   disabled,
   language,
+  sessionId,
+  onVoiceResult,
+  onVoiceError,
 }: ChatInputProps) {
   const [value, setValue] = useState("");
+  const [voiceBusy, setVoiceBusy] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const placeholder =
     language === "ko"
       ? "메시지를 입력하세요..."
       : "メッセージを入力してください...";
+
+  const isDisabled = disabled || voiceBusy;
 
   // Auto-resize textarea
   useEffect(() => {
@@ -33,7 +43,7 @@ export default function ChatInput({
 
   function handleSend() {
     const trimmed = value.trim();
-    if (!trimmed || disabled) return;
+    if (!trimmed || isDisabled) return;
     onSend(trimmed);
     setValue("");
     // Reset textarea height
@@ -60,13 +70,23 @@ export default function ChatInput({
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            disabled={disabled}
+            disabled={isDisabled}
             rows={1}
             className="flex-1 resize-none rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-[#3A2630] placeholder-gray-400 focus:outline-none focus:border-[#C97FAF] focus:ring-1 focus:ring-[#C97FAF]/30 disabled:bg-gray-50 disabled:text-gray-400 transition-colors font-[Noto_Sans_JP]"
           />
+          {sessionId && onVoiceResult && (
+            <VoiceMicButton
+              sessionId={sessionId}
+              disabled={disabled}
+              language={language}
+              onVoiceResult={onVoiceResult}
+              onError={onVoiceError}
+              onStateChange={(s) => setVoiceBusy(s !== "idle")}
+            />
+          )}
           <button
             onClick={handleSend}
-            disabled={disabled || !value.trim()}
+            disabled={isDisabled || !value.trim()}
             className="w-10 h-10 rounded-full bg-[#C97FAF] text-white flex items-center justify-center flex-shrink-0 hover:bg-[#B06A99] active:scale-95 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all"
             aria-label={language === "ko" ? "전송" : "送信"}
           >

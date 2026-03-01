@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { use } from "react";
 import { reportAPI, isV3Report, type Report, type ReportData } from "@/lib/api";
 // [R1-R3 비활성화] 28일 R4 테스트 후 활성화 예정
@@ -15,9 +16,11 @@ export default function ReportDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const router = useRouter();
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState<"ja" | "ko">("ja");
+  const [defaultLang, setDefaultLang] = useState<"ja" | "ko">("ja");
   const [translating, setTranslating] = useState(false);
   const [approving, setApproving] = useState(false);
   const [rejecting, setRejecting] = useState(false);
@@ -31,6 +34,10 @@ export default function ReportDetailPage({
     try {
       const data = await reportAPI.get(id);
       setReport(data);
+      // input_language 기반 기본 언어 설정
+      const inputLang = data.consultations?.input_language === "ko" ? "ko" : "ja";
+      setDefaultLang(inputLang);
+      setLang(inputLang);
     } catch {
       setReport(null);
     } finally {
@@ -86,28 +93,24 @@ export default function ReportDetailPage({
     }
   };
 
-  const handleSendEmail = async (language: string = "ja") => {
-    if (!report) return;
-    try {
-      const result = await reportAPI.sendEmail(report.id, language);
-      setReport({ ...report, status: "sent" });
-      alert(`이메일 발송 완료: ${result.email_sent_to} (${language === "ko" ? "한국어" : "日本語"})`);
-    } catch (err) {
-      alert(`발송 실패: ${err instanceof Error ? err.message : "알 수 없는 오류"}`);
-    }
+  // input_language 기반 URL 생성 (한국어면 ?lang=ko 추가)
+  const getReportUrl = () => {
+    if (!report?.access_token) return "";
+    const base = `${window.location.origin}/report/${report.access_token}`;
+    return defaultLang === "ko" ? `${base}?lang=ko` : base;
   };
 
   const handleCopyLink = () => {
-    if (!report?.access_token) return;
-    const url = `${window.location.origin}/report/${report.access_token}`;
+    const url = getReportUrl();
+    if (!url) return;
     navigator.clipboard.writeText(url);
     alert("링크가 복사되었습니다.");
     setShowShare(false);
   };
 
   const handleLineShare = () => {
-    if (!report?.access_token) return;
-    const url = `${window.location.origin}/report/${report.access_token}`;
+    const url = getReportUrl();
+    if (!url) return;
     window.open(
       `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}`,
       "_blank"
@@ -154,10 +157,12 @@ export default function ReportDetailPage({
   const customerName = consultation?.customer_name || "고객";
   const customerEmail = consultation?.customer_email || "";
 
+  // 한국어 원본 리포트면 report_data가 이미 한국어
+  // 일본어 원본이면 report_data가 일본어, report_data_ko가 한국어 번역
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const reportData: any = lang === "ko" && report.report_data_ko
-    ? report.report_data_ko
-    : report.report_data;
+  const reportData: any = defaultLang === "ko"
+    ? report.report_data  // 한국어 원본 리포트
+    : (lang === "ko" && report.report_data_ko ? report.report_data_ko : report.report_data);
   const isV3 = reportData ? isV3Report(reportData) : false;
 
   return (
@@ -180,36 +185,43 @@ export default function ReportDetailPage({
 
         {reportData && (
           <>
-            {/* Language Toggle */}
-            <div className="flex items-center justify-between">
-              <div className="flex bg-slate-100 rounded-lg p-0.5">
-                <button
-                  onClick={() => setLang("ja")}
-                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    lang === "ja" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500"
-                  }`}
-                >
-                  일본어 원문
-                </button>
-                <button
-                  onClick={() => {
-                    if (lang === "ko") return;
-                    handleTranslate();
-                  }}
-                  disabled={translating}
-                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${
-                    lang === "ko"
-                      ? "bg-white text-slate-800 shadow-sm"
-                      : "text-slate-500"
-                  } ${translating ? "opacity-50" : ""}`}
-                >
-                  {translating && (
-                    <div className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-                  )}
-                  한글 번역
-                </button>
+            {/* Language Toggle — 한국어 원본이면 토글 없음 */}
+            {defaultLang === "ja" && (
+              <div className="flex items-center justify-between">
+                <div className="flex bg-slate-100 rounded-lg p-0.5">
+                  <button
+                    onClick={() => setLang("ja")}
+                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                      lang === "ja" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500"
+                    }`}
+                  >
+                    일본어 원문
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (lang === "ko") return;
+                      handleTranslate();
+                    }}
+                    disabled={translating}
+                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${
+                      lang === "ko"
+                        ? "bg-white text-slate-800 shadow-sm"
+                        : "text-slate-500"
+                    } ${translating ? "opacity-50" : ""}`}
+                  >
+                    {translating && (
+                      <div className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+                    )}
+                    한글 번역
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
+            {defaultLang === "ko" && (
+              <div className="flex items-center">
+                <span className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">한국어 리포트</span>
+              </div>
+            )}
 
             {/* Report Preview — R4 480px 모바일 프레임 */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
@@ -219,19 +231,19 @@ export default function ReportDetailPage({
                   <div className="glass-header border-b border-gray-100 px-5 py-4">
                     <div className="flex items-center gap-2 mb-3">
                       <img src="/arumi-logo.png" alt="ARUMI" className="w-6 h-6 rounded" />
-                      <h1 className="text-sm font-bold text-text-dark tracking-tight font-[Noto_Sans_JP]">
-                        ARUMI | オンライン相談リポート
+                      <h1 className={`text-sm font-bold text-text-dark tracking-tight ${defaultLang === "ko" ? "font-[Noto_Sans_KR]" : "font-[Noto_Sans_JP]"}`}>
+                        {defaultLang === "ko" ? "ARUMI | 온라인 상담 리포트" : "ARUMI | オンライン相談リポート"}
                       </h1>
                     </div>
-                    <h2 className="text-xl font-black text-text-dark leading-tight font-[Noto_Sans_JP]">
+                    <h2 className={`text-xl font-black text-text-dark leading-tight ${defaultLang === "ko" ? "font-[Noto_Sans_KR]" : "font-[Noto_Sans_JP]"}`}>
                       {reportData.title}
                     </h2>
-                    <p className="text-xs text-gray-500 mt-2 font-medium font-[Noto_Sans_JP]">
+                    <p className={`text-xs text-gray-500 mt-2 font-medium ${defaultLang === "ko" ? "font-[Noto_Sans_KR]" : "font-[Noto_Sans_JP]"}`}>
                       {reportData.date}
                     </p>
                   </div>
 
-                  <div className="p-5 space-y-8 font-[Noto_Sans_JP]">
+                  <div className={`p-5 space-y-8 ${defaultLang === "ko" ? "font-[Noto_Sans_KR]" : "font-[Noto_Sans_JP]"}`}>
                     {isV3 ? (
                       <R4Sections reportData={reportData} lang={lang} />
                     ) : (
@@ -242,13 +254,17 @@ export default function ReportDetailPage({
                   </div>
 
                   {/* Footer */}
-                  <div className="bg-white border-t border-gray-100 p-6 text-center font-[Noto_Sans_JP]">
+                  <div className={`bg-white border-t border-gray-100 p-6 text-center ${defaultLang === "ko" ? "font-[Noto_Sans_KR]" : "font-[Noto_Sans_JP]"}`}>
                     <div className="flex justify-center items-center gap-2 mb-4">
                       <img src="/arumi-logo.png" alt="ARUMI" className="w-6 h-6 rounded" />
-                      <span className="text-sm font-bold text-text-dark">ARUMI | オンライン相談リポート</span>
+                      <span className="text-sm font-bold text-text-dark">
+                        {defaultLang === "ko" ? "ARUMI | 온라인 상담 리포트" : "ARUMI | オンライン相談リポート"}
+                      </span>
                     </div>
                     <p className="text-[10px] text-gray-400 leading-relaxed">
-                      本リポートはカウンセリング時の内容を元に作成されたものであり、確定的な診断や治療を保証するものではありません。
+                      {defaultLang === "ko"
+                        ? "본 리포트는 상담 시 내용을 바탕으로 작성된 것이며, 확정적인 진단이나 치료를 보장하는 것은 아닙니다."
+                        : "本リポートはカウンセリング時の内容を元に作成されたものであり、確定的な診断や治療を保証するものではありません."}
                     </p>
                   </div>
                 </div>
@@ -296,18 +312,11 @@ export default function ReportDetailPage({
 
                 <div className="flex gap-3 flex-wrap">
                   <button
-                    onClick={() => handleSendEmail("ja")}
+                    onClick={() => router.push("/admin/emails")}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                   >
                     <span className="material-symbols-outlined text-lg">email</span>
-                    日本語 발송
-                  </button>
-                  <button
-                    onClick={() => handleSendEmail("ko")}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-lg">email</span>
-                    한국어 발송
+                    이메일 발송
                   </button>
 
                   <div className="relative inline-block">

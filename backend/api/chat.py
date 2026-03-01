@@ -5,7 +5,7 @@ from typing import Optional
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import BaseModel
-from models.schemas import ChatStartRequest, ChatMessageRequest, ChatEndRequest
+from models.schemas import ChatStartRequest, ChatMessageRequest, ChatEndRequest, ChatVoiceMessageRequest
 from services.supabase_client import get_supabase
 from agents.chat_agent import get_greeting, run_chat_rag  # noqa: F401 — 레거시 호환
 from agents.chat_router import run_multi_agent_chat
@@ -203,6 +203,164 @@ async def send_message(data: ChatMessageRequest):
         "can_generate_report": can_generate_report,
         "agent_type": agent_type,
     }
+
+
+# ============================================
+# POST /api/chat/voice-message — 음성 메시지 (STT → 경량챗봇, TTS 분리)
+# ============================================
+_TTS_MAX_CHARS = 200  # TTS용 텍스트 최대 길이
+
+
+def _truncate_for_tts(text: str, max_chars: int = _TTS_MAX_CHARS) -> str:
+    """TTS용 텍스트를 문장 단위로 자름."""
+    if len(text) <= max_chars:
+        return text
+    cut = text[:max_chars]
+    for sep in ["。", ".", "！", "？", "?", "\n"]:
+        last = cut.rfind(sep)
+        if last > max_chars // 2:
+            return cut[: last + 1]
+    return cut
+
+
+@router.post("/voice-message")
+async def send_voice_message(data: ChatVoiceMessageRequest):
+    """음성 메시지: STT → 멀티에이전트 RAG 챗봇 (TTS 별도, 텍스트 즉시 반환)"""
+    from services.gemini_client import speech_to_text
+
+    db = get_supabase()
+
+    # 세션 확인
+    session_result = (
+        db.table("chat_sessions")
+        .select("id, language, status")
+        .eq("id", data.session_id)
+        .single()
+        .execute()
+    )
+    if not session_result.data:
+        raise HTTPException(status_code=404, detail="Chat session not found")
+
+    session = session_result.data
+    if session["status"] != "active":
+        raise HTTPException(status_code=400, detail="Chat session is not active")
+
+    language = session.get("language", "ja")
+
+    # 1. STT: 음성 → 텍스트 (flash-lite)
+    try:
+        transcribed = await speech_to_text(data.audio_base64, data.mime_type, language)
+    except Exception as e:
+        logger.error(f"[Voice] STT failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Speech recognition failed. Please try text input.")
+
+    if not transcribed or not transcribed.strip():
+        err_msg = (
+            "音声を認識できませんでした。もう一度お試しいただくか、テキストで入力してください。"
+            if language == "ja"
+            else "음성을 인식하지 못했습니다. 다시 시도하거나 텍스트로 입력해 주세요."
+        )
+        return {
+            "transcribed_text": "",
+            "content": err_msg,
+            "rag_references": [],
+            "can_generate_report": False,
+            "agent_type": "general",
+            "audio_base64": None,
+            "audio_format": None,
+        }
+
+    # 2. 사용자 메시지 저장
+    db.table("chat_messages").insert({
+        "session_id": data.session_id,
+        "role": "user",
+        "content": transcribed,
+    }).execute()
+
+    # 3. 히스토리 로드 + 멀티에이전트 RAG 챗봇 (텍스트 /message 와 동일 파이프라인)
+    history_result = (
+        db.table("chat_messages")
+        .select("role, content")
+        .eq("session_id", data.session_id)
+        .order("created_at")
+        .limit(20)
+        .execute()
+    )
+    messages = history_result.data or []
+
+    agent_type = "general"
+    try:
+        result = await run_multi_agent_chat(
+            messages, language, session_id=data.session_id
+        )
+        response_text = result["response"]
+        rag_references = result["rag_references"]
+        agent_type = result["agent_type"]
+        cta_level = result.get("cta_level")
+        if cta_level:
+            try:
+                db.table("chat_sessions").update(
+                    {"cta_level": cta_level}
+                ).eq("id", data.session_id).execute()
+            except Exception:
+                pass
+    except Exception as e:
+        logger.error(f"[Voice] Multi-agent failed: {e}", exc_info=True)
+        response_text = (
+            "申し訳ございません。一時的にエラーが発生しました。もう一度お試しいただけますか？"
+            if language == "ja"
+            else "죄송합니다. 일시적인 오류가 발생했습니다. 다시 시도해 주시겠어요?"
+        )
+        rag_references = []
+
+    # 4. AI 응답 저장
+    db.table("chat_messages").insert({
+        "session_id": data.session_id,
+        "role": "assistant",
+        "content": response_text,
+        "rag_references": rag_references if rag_references else None,
+    }).execute()
+
+    # 5. 리포트 생성 가능 여부
+    user_msg_count = sum(1 for m in messages if m["role"] == "user")
+    can_generate_report = user_msg_count >= 5
+
+    # TTS 없이 텍스트만 즉시 반환. 프론트엔드에서 별도 /tts 호출.
+    return {
+        "transcribed_text": transcribed,
+        "content": response_text,
+        "rag_references": rag_references,
+        "can_generate_report": can_generate_report,
+        "agent_type": agent_type,
+        "audio_base64": None,
+        "audio_format": None,
+    }
+
+
+# ============================================
+# POST /api/chat/tts — 텍스트 → 음성 (별도 비동기 호출)
+# ============================================
+class TTSRequest(BaseModel):
+    text: str
+    language: str = "ja"
+
+
+@router.post("/tts")
+async def generate_tts(data: TTSRequest):
+    """텍스트를 음성으로 변환. 프론트엔드에서 voice-message 수신 후 별도 호출."""
+    from services.gemini_client import text_to_speech
+
+    try:
+        audio_base64 = await text_to_speech(data.text, data.language)
+        if audio_base64:
+            return {
+                "audio_base64": audio_base64,
+                "audio_format": "mp3",
+            }
+    except Exception as e:
+        logger.warning(f"[TTS] Failed: {e}")
+
+    return {"audio_base64": None, "audio_format": None}
 
 
 # ============================================

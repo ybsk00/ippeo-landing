@@ -207,12 +207,17 @@ async def delete_consultations_post(data: GenerateReportsRequest):
 
     db = get_supabase()
 
-    # agent_logs 먼저 삭제 (FK)
     for cid in data.consultation_ids:
+        # chat_sessions 원복 (이전 내역 되돌리기: consultation_id→null, status→active)
+        db.table("chat_sessions").update({
+            "consultation_id": None,
+            "status": "active",
+        }).eq("consultation_id", cid).execute()
+
+        # agent_logs 삭제 (FK)
         db.table("agent_logs").delete().eq("consultation_id", cid).execute()
 
-    # reports 삭제 (CASCADE로 자동 처리되지만 명시적으로)
-    for cid in data.consultation_ids:
+        # reports 삭제 (CASCADE로 자동 처리되지만 명시적으로)
         db.table("reports").delete().eq("consultation_id", cid).execute()
 
     # consultations 삭제

@@ -1,9 +1,12 @@
 interface ReportHeaderProps {
   title: string;
   date: string;
+  lang?: "ja" | "ko";
 }
 
-export default function ReportHeader({ title, date }: ReportHeaderProps) {
+export default function ReportHeader({ title, date, lang = "ja" }: ReportHeaderProps) {
+  const isKo = lang === "ko";
+
   return (
     <header className="glass-header sticky top-0 z-40 border-b border-gray-100 px-5 py-4">
       <div className="flex items-center gap-2 mb-3">
@@ -13,7 +16,7 @@ export default function ReportHeader({ title, date }: ReportHeaderProps) {
           className="w-6 h-6 rounded"
         />
         <h1 className="text-sm font-bold text-text-dark tracking-tight">
-          ARUMI | オンライン相談リポート
+          {isKo ? "ARUMI | 온라인 상담 리포트" : "ARUMI | オンライン相談リポート"}
         </h1>
       </div>
       <div>
@@ -21,7 +24,9 @@ export default function ReportHeader({ title, date }: ReportHeaderProps) {
           {title}
         </h2>
         <p className="text-xs text-gray-500 mt-2 font-medium">
-          {date.startsWith("作成日") ? date : `作成日：${date}`}
+          {isKo
+            ? (date.startsWith("작성일") ? date : `작성일: ${date}`)
+            : (date.startsWith("作成日") ? date : `作成日：${date}`)}
         </p>
       </div>
     </header>

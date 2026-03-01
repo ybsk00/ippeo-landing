@@ -20,7 +20,7 @@ async def list_reports():
     db = get_supabase()
     result = (
         db.table("reports")
-        .select("*, consultations(customer_name, customer_email, classification)")
+        .select("*, consultations(customer_name, customer_email, classification, input_language)")
         .order("created_at", desc=True)
         .execute()
     )
@@ -34,7 +34,7 @@ async def list_reports():
 #     db = get_supabase()
 #     result = (
 #         db.table("reports")
-#         .select("*, consultations(customer_name, customer_email, customer_line_id, classification, cta_level)")
+#         .select("*, consultations(customer_name, customer_email, customer_line_id, classification, cta_level, input_language)")
 #         .eq("consultation_id", consultation_id)
 #         .order("report_type")
 #         .execute()
@@ -92,7 +92,7 @@ async def get_report(report_id: str):
     # 1차: report_id로 조회
     result = (
         db.table("reports")
-        .select("*, consultations(customer_name, customer_email, customer_line_id, classification, cta_level)")
+        .select("*, consultations(customer_name, customer_email, customer_line_id, classification, cta_level, input_language)")
         .eq("id", report_id)
         .limit(1)
         .execute()
@@ -104,7 +104,7 @@ async def get_report(report_id: str):
     # 2차: consultation_id로 조회
     result = (
         db.table("reports")
-        .select("*, consultations(customer_name, customer_email, customer_line_id, classification, cta_level)")
+        .select("*, consultations(customer_name, customer_email, customer_line_id, classification, cta_level, input_language)")
         .eq("consultation_id", report_id)
         .order("created_at", desc=True)
         .limit(1)
@@ -162,7 +162,7 @@ async def send_email(report_id: str, data: SendEmailRequest = SendEmailRequest()
 
     report = (
         db.table("reports")
-        .select("*, consultations(customer_name, customer_email)")
+        .select("*, consultations(customer_name, customer_email, input_language)")
         .eq("id", report_id)
         .single()
         .execute()
@@ -178,6 +178,9 @@ async def send_email(report_id: str, data: SendEmailRequest = SendEmailRequest()
     access_token = report.data["access_token"]
     to_email = consultation["customer_email"]
 
+    # input_language 기반 자동 언어 결정 (명시적 지정 없으면 input_language 사용)
+    email_lang = consultation.get("input_language", "ja")
+
     if not to_email:
         raise HTTPException(status_code=400, detail="발송할 이메일 주소가 없습니다")
 
@@ -186,7 +189,7 @@ async def send_email(report_id: str, data: SendEmailRequest = SendEmailRequest()
             to_email=to_email,
             customer_name=consultation["customer_name"],
             access_token=access_token,
-            language=data.language,
+            language=email_lang,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"이메일 발송 실패: {str(e)}")

@@ -40,6 +40,12 @@ export interface SendMessageResponse {
   pending_email?: string;
 }
 
+export interface VoiceMessageResponse extends SendMessageResponse {
+  transcribed_text: string;
+  audio_base64: string | null;
+  audio_format: string | null;
+}
+
 export interface EndSessionResponse {
   consultation_id: string;
   status: string;
@@ -185,5 +191,44 @@ export function confirmEmail(
   return fetchChatAPI("/chat/confirm-email", {
     method: "POST",
     body: JSON.stringify({ session_id: sessionId, email, agreed }),
+  });
+}
+
+/**
+ * 음성 메시지 전송 (STT → 챗봇, TTS 없이 텍스트만 즉시 반환)
+ */
+export function sendVoiceMessage(
+  sessionId: string,
+  audioBase64: string,
+  mimeType: string = "audio/webm",
+  enableTts: boolean = false
+): Promise<VoiceMessageResponse> {
+  return fetchChatAPI<VoiceMessageResponse>("/chat/voice-message", {
+    method: "POST",
+    body: JSON.stringify({
+      session_id: sessionId,
+      audio_base64: audioBase64,
+      mime_type: mimeType,
+      enable_tts: enableTts,
+    }),
+  });
+}
+
+export interface TTSResponse {
+  audio_base64: string | null;
+  audio_format: string | null;
+}
+
+/**
+ * 텍스트 → 음성 변환 (별도 비동기 호출)
+ * voice-message 응답 수신 후 별도로 호출하여 오디오 재생
+ */
+export function requestTTS(
+  text: string,
+  language: string = "ja"
+): Promise<TTSResponse> {
+  return fetchChatAPI<TTSResponse>("/chat/tts", {
+    method: "POST",
+    body: JSON.stringify({ text, language }),
   });
 }

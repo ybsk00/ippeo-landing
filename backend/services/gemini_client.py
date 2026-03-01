@@ -1,8 +1,11 @@
 import asyncio
+import base64
 import json
 import logging
 import re
+import struct
 import google.generativeai as genai
+from google import genai as genai_new
 from config import GEMINI_API_KEY
 
 logger = logging.getLogger(__name__)
@@ -121,7 +124,7 @@ def safe_parse_json(text: str) -> dict | list:
         raise
 
 
-async def generate_json(prompt: str, system_instruction: str = "", max_retries: int = 3) -> str:
+async def generate_json(prompt: str, system_instruction: str = "", max_retries: int = 3, model_name: str = "gemini-2.5-flash") -> str:
     """JSON 생성 + 파싱 검증. 파싱 실패 시 Gemini 재호출."""
     model_kwargs: dict = {
         "generation_config": genai.GenerationConfig(
@@ -130,7 +133,7 @@ async def generate_json(prompt: str, system_instruction: str = "", max_retries: 
     }
     if system_instruction:
         model_kwargs["system_instruction"] = system_instruction
-    model = genai.GenerativeModel("gemini-2.5-flash", **model_kwargs)
+    model = genai.GenerativeModel(model_name, **model_kwargs)
     last_error = None
     for attempt in range(max_retries):
         response = await _retry_generate(model, prompt)
@@ -191,3 +194,119 @@ async def get_query_embedding(text: str) -> list[float]:
                 await asyncio.sleep(3 * (attempt + 1))
             else:
                 raise
+
+
+# ============================================
+# STT (Speech-to-Text) — 기존 SDK (google-generativeai)
+# ============================================
+
+async def speech_to_text(
+    audio_base64: str,
+    mime_type: str = "audio/webm",
+    language: str = "ja",
+) -> str:
+    """음성을 텍스트로 변환 (Gemini flash-lite, inline_data)"""
+    prompt = (
+        "Transcribe this audio in Japanese. Return only the text."
+        if language == "ja"
+        else "Transcribe this audio in Korean. Return only the text."
+    )
+
+    model = genai.GenerativeModel("gemini-2.5-flash-lite")
+
+    for attempt in range(2):
+        try:
+            response = await asyncio.to_thread(
+                model.generate_content,
+                [
+                    prompt,
+                    {"inline_data": {"mime_type": mime_type, "data": audio_base64}},
+                ],
+            )
+            text = (response.text or "").strip()
+            logger.info(f"[STT] Transcribed ({language}): {text[:80]}...")
+            return text
+        except Exception as e:
+            err_str = str(e)
+            is_retryable = any(kw in err_str for kw in _RETRYABLE_ERRORS)
+            if is_retryable and attempt < 1:
+                wait = 3
+                logger.warning(f"[STT] Retry {attempt + 1}/2, waiting {wait}s: {err_str[:120]}")
+                await asyncio.sleep(wait)
+                continue
+            logger.error(f"[STT] Failed after {attempt + 1} attempts: {err_str[:200]}")
+            raise
+
+
+# ============================================
+# TTS (Text-to-Speech) — Google Cloud TTS
+# ============================================
+
+from google.cloud import texttospeech
+
+_cloud_tts_client = None
+
+# 언어별 음성 설정 (WaveNet — 자연스러운 음성)
+_VOICE_CONFIG = {
+    "ja": {"language_code": "ja-JP", "name": "ja-JP-Wavenet-B"},
+    "ko": {"language_code": "ko-KR", "name": "ko-KR-Wavenet-A"},
+}
+
+
+def _get_cloud_tts_client():
+    global _cloud_tts_client
+    if _cloud_tts_client is None:
+        _cloud_tts_client = texttospeech.TextToSpeechClient()
+    return _cloud_tts_client
+
+
+def _sync_cloud_tts(text: str, language: str) -> bytes | None:
+    """동기 Cloud TTS 호출 (스레드 풀에서 실행용). MP3 반환."""
+    client = _get_cloud_tts_client()
+
+    voice_cfg = _VOICE_CONFIG.get(language, _VOICE_CONFIG["ja"])
+
+    synthesis_input = texttospeech.SynthesisInput(text=text)
+    voice = texttospeech.VoiceSelectionParams(
+        language_code=voice_cfg["language_code"],
+        name=voice_cfg["name"],
+    )
+    audio_config = texttospeech.AudioConfig(
+        audio_encoding=texttospeech.AudioEncoding.MP3,
+        speaking_rate=1.0,
+    )
+
+    response = client.synthesize_speech(
+        input=synthesis_input,
+        voice=voice,
+        audio_config=audio_config,
+    )
+
+    if response.audio_content:
+        return response.audio_content
+    return None
+
+
+async def text_to_speech(text: str, language: str = "ja") -> str | None:
+    """텍스트를 음성으로 변환. base64 MP3 반환. 실패 시 None."""
+    if not text or len(text.strip()) < 2:
+        return None
+
+    for attempt in range(2):
+        try:
+            mp3_bytes = await asyncio.to_thread(_sync_cloud_tts, text, language)
+            if mp3_bytes:
+                encoded = base64.b64encode(mp3_bytes).decode("ascii")
+                logger.info(f"[TTS] Generated MP3 ({language}), {len(mp3_bytes)} bytes, {len(text)} chars")
+                return encoded
+            logger.warning("[TTS] Empty audio response")
+            return None
+        except Exception as e:
+            err_str = str(e)
+            is_retryable = any(kw in err_str for kw in _RETRYABLE_ERRORS)
+            if is_retryable and attempt < 1:
+                logger.warning(f"[TTS] Retry {attempt + 1}/2: {err_str[:120]}")
+                await asyncio.sleep(3)
+                continue
+            logger.error(f"[TTS] Failed: {err_str[:200]}")
+            return None

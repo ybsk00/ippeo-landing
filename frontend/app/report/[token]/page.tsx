@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import ReportClient from "./ReportClient";
 
 const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://ippeo-medhim.web.app";
+  process.env.NEXT_PUBLIC_SITE_URL || "https://arumi-landing.web.app";
 
 function getApiBase(): string {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -30,7 +30,6 @@ export async function generateMetadata({
       siteName: "ARUMI",
       locale: "ja_JP",
       type: "article",
-      images: [{ url: `${SITE_URL}/arumi-logo.png`, width: 480, height: 480 }],
     },
   };
 
@@ -71,9 +70,6 @@ export async function generateMetadata({
         locale: "ja_JP",
         type: "article",
         url: `${SITE_URL}/report/${token}`,
-        images: [
-          { url: `${SITE_URL}/arumi-logo.png`, width: 480, height: 480 },
-        ],
       },
     };
   } catch {

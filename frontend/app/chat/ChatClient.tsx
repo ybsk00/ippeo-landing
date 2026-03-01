@@ -8,9 +8,12 @@ import TypingIndicator from "@/components/chat/TypingIndicator";
 import {
   startSession,
   sendMessage,
+  requestTTS,
   type ChatMessage as ChatMessageType,
   type Language,
+  type VoiceMessageResponse,
 } from "@/lib/chatApi";
+import { playAudio } from "@/lib/audioUtils";
 
 export default function ChatClient() {
   const searchParams = useSearchParams();
@@ -108,6 +111,42 @@ export default function ChatClient() {
     }
   }
 
+  // ---- Voice result handler ----
+  function handleVoiceResult(result: VoiceMessageResponse) {
+    if (result.transcribed_text) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `user-voice-${Date.now()}`,
+          role: "user",
+          content: result.transcribed_text,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    }
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `ai-voice-${Date.now()}`,
+        role: "assistant",
+        content: result.content,
+        rag_references: result.rag_references,
+        agent_type: result.agent_type,
+        timestamp: new Date().toISOString(),
+      },
+    ]);
+    // Play TTS: use embedded audio or fire async TTS request
+    if (result.audio_base64) {
+      playAudio(result.audio_base64, result.audio_format).catch(() => {});
+    } else if (result.content) {
+      requestTTS(result.content, lang)
+        .then((tts) => {
+          if (tts.audio_base64) playAudio(tts.audio_base64, tts.audio_format).catch(() => {});
+        })
+        .catch(() => {});
+    }
+  }
+
   // ---- Loading state ----
   if (isInitializing) {
     return (
@@ -192,6 +231,9 @@ export default function ChatClient() {
         onSend={handleSend}
         disabled={isTyping || !sessionId}
         language={lang}
+        sessionId={sessionId}
+        onVoiceResult={handleVoiceResult}
+        onVoiceError={(msg) => setError(msg)}
       />
     </div>
   );

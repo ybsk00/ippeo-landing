@@ -1,6 +1,8 @@
 fastapi
 uvicorn[standard]
 google-generativeai
+google-genai
+google-cloud-texttospeech
 supabase
 
 youtube-transcript-api

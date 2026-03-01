@@ -3,13 +3,17 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import ChatMessage from "./ChatMessage";
 import TypingIndicator from "./TypingIndicator";
+import VoiceMicButton from "./VoiceMicButton";
 import {
   startSession,
   sendMessage,
+  requestTTS,
   type ChatMessage as ChatMessageType,
   type RAGReference,
   type Language,
+  type VoiceMessageResponse,
 } from "@/lib/chatApi";
+import { playAudio } from "@/lib/audioUtils";
 import type { Lang } from "@/lib/i18n";
 
 interface Props {
@@ -102,6 +106,7 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
 
   const [inputValue, setInputValue] = useState("");
+  const [voiceBusy, setVoiceBusy] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -201,6 +206,42 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    }
+  }
+
+  function handleVoiceResult(result: VoiceMessageResponse) {
+    // Add user message (transcribed text)
+    if (result.transcribed_text) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `user-voice-${Date.now()}`,
+          role: "user",
+          content: result.transcribed_text,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
+    }
+    // Add AI response (text shown immediately)
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `ai-voice-${Date.now()}`,
+        role: "assistant",
+        content: result.content,
+        rag_references: result.rag_references,
+        timestamp: new Date().toISOString(),
+      },
+    ]);
+    // Play TTS audio: fire async request, play when ready
+    if (result.audio_base64) {
+      playAudio(result.audio_base64, result.audio_format).catch(() => {});
+    } else if (result.content) {
+      requestTTS(result.content, language)
+        .then((tts) => {
+          if (tts.audio_base64) playAudio(tts.audio_base64, tts.audio_format).catch(() => {});
+        })
+        .catch(() => {});
     }
   }
 
@@ -334,14 +375,22 @@ export default function FloatingChatPanel({ lang, onClose }: Props) {
                       onChange={(e) => setInputValue(e.target.value)}
                       onKeyDown={handleKeyDown}
                       placeholder={t.placeholder}
-                      disabled={isTyping || !sessionId}
+                      disabled={isTyping || voiceBusy || !sessionId}
                       rows={1}
                       className="flex-1 resize-none bg-transparent text-sm text-[#3A2630] placeholder-gray-400 focus:outline-none disabled:text-gray-300 leading-relaxed"
                     />
                   </div>
+                  <VoiceMicButton
+                    sessionId={sessionId}
+                    disabled={isTyping || !sessionId}
+                    language={language}
+                    onVoiceResult={handleVoiceResult}
+                    onError={(msg) => setError(msg)}
+                    onStateChange={(s) => setVoiceBusy(s !== "idle")}
+                  />
                   <button
                     onClick={handleSend}
-                    disabled={isTyping || !sessionId || !inputValue.trim()}
+                    disabled={isTyping || voiceBusy || !sessionId || !inputValue.trim()}
                     className="w-10 h-10 rounded-full bg-[#C97FAF] text-white flex items-center justify-center flex-shrink-0 hover:bg-[#B06A99] active:scale-95 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all shadow-md shadow-[#C97FAF]/20"
                   >
                     <span className="material-symbols-outlined text-lg">

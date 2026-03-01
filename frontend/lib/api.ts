@@ -93,6 +93,7 @@ export interface Report {
     customer_line_id?: string;
     classification?: string;
     cta_level?: string;
+    input_language?: string;
   };
 }
 
@@ -420,7 +421,7 @@ export const vectorAPI = {
 // ============================================
 export const publicReportAPI = {
   get: (token: string) =>
-    fetchAPI<{ report_data: ReportData; customer_name: string }>(
+    fetchAPI<{ report_data: ReportData; report_data_ko?: ReportData | null; input_language?: string; customer_name: string }>(
       `/public/report/${token}`
     ),
   verify: (token: string, birthDate: string) =>

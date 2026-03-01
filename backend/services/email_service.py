@@ -118,12 +118,12 @@ async def send_report_email(
     access_token: str,
     language: str = "ja",
 ) -> dict:
-    report_url = f"{FRONTEND_URL}/report/{access_token}"
-
     if language == "ko":
+        report_url = f"{FRONTEND_URL}/report/{access_token}?lang=ko"
         subject = f"【ARUMI】{customer_name}님 상담 리포트가 도착했습니다"
         html_content = _build_r4_html_ko(customer_name, report_url)
     else:
+        report_url = f"{FRONTEND_URL}/report/{access_token}"
         subject = f"【ARUMI】{customer_name}様 ご相談リポートが届きました"
         html_content = _build_r4_html(customer_name, report_url)
 

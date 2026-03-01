@@ -97,7 +97,7 @@ JSON 배열로 반환 (최대 8개):
 예: ["코끝 성형", "자연스러운 코", "회복 기간"]
 """
     try:
-        raw = await generate_json(prompt)
+        raw = await generate_json(prompt, model_name="gemini-2.5-flash-lite")
         data = json.loads(raw)
         if isinstance(data, list):
             return [str(k) for k in data[:8]]
@@ -134,7 +134,7 @@ async def detect_category_from_messages(
 - 경계 시술(보톡스, 필러)은 맥락으로 판단. 확실치 않으면 plastic_surgery
 """
     try:
-        raw = await generate_json(prompt)
+        raw = await generate_json(prompt, model_name="gemini-2.5-flash-lite")
         data = json.loads(raw)
         cat = data.get("category", "plastic_surgery")
         if cat in ("dermatology", "plastic_surgery"):

@@ -117,6 +117,13 @@ class ChatMessageRequest(BaseModel):
     content: str
 
 
+class ChatVoiceMessageRequest(BaseModel):
+    session_id: str
+    audio_base64: str
+    mime_type: str = "audio/webm"
+    enable_tts: bool = True
+
+
 class ChatEndRequest(BaseModel):
     session_id: str
     customer_name: Optional[str] = ""

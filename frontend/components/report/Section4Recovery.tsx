@@ -1,24 +1,25 @@
 interface Section4RecoveryProps {
   timeline: { period: string; detail: string }[];
   note?: string | null;
+  lang?: "ja" | "ko";
 }
 
-export default function Section4Recovery({ timeline, note }: Section4RecoveryProps) {
+export default function Section4Recovery({ timeline, note, lang = "ja" }: Section4RecoveryProps) {
   return (
     <section>
       <h3 className="text-lg font-bold text-text-dark mb-4 flex items-center gap-2">
         <span className="block w-1 h-6 bg-coral rounded-full"></span>
-        予想回復スケジュール
+        {lang === "ko" ? "예상 회복 스케줄" : "予想回復スケジュール"}
       </h3>
       <div className="bg-white rounded-xl card-shadow overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50">
               <th className="text-left px-5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider w-1/4">
-                期間
+                {lang === "ko" ? "기간" : "期間"}
               </th>
               <th className="text-left px-5 py-3 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                状態・ケア
+                {lang === "ko" ? "상태/케어" : "状態・ケア"}
               </th>
             </tr>
           </thead>
